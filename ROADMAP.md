@@ -10,7 +10,7 @@ geolint should be the linter people run on GeoJSON before it reaches a map: it c
 
 ## Priorities
 
-The order the work is done in, as GitHub milestones. A milestone is an outcome a release note could carry; the issues in it are the detail and are not listed here. Quality, process and performance work that is not a release outcome sits in the [Maintenance](https://github.com/MapCairn/geolint/milestone/2) milestone, which is never ranked. A milestone leaves this list in the pull request that closes its last issue, and the order is the maintainer's call.
+The order the work is done in, as GitHub milestones. A milestone is an outcome a release note could carry; the issues in it are the detail and are not listed here. A milestone leaves this list in the pull request that closes its last issue, and the order is the maintainer's call.
 
 1. **[First release](https://github.com/MapCairn/geolint/milestone/1).** `@mapcairn/geolint` is published to npm with a GitHub release, once the maintainer gives explicit permission and a person has checked the licences of what the package contains.
 
