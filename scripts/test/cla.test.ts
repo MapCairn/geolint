@@ -107,11 +107,6 @@ describe("the CLA text", () => {
     expect(claText).toContain("Apache License, Version 2.0");
     expect(claText).not.toContain("AGPL");
   });
-
-  it("says what covers the contributions made while geolint was part of MapCairn", () => {
-    expect(claText).toContain("section 7");
-    expect(claText).toContain("https://github.com/MapCairn/mapcairn");
-  });
 });
 
 describe("isAgreementComment", () => {

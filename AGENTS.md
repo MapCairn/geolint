@@ -12,7 +12,7 @@ geolint (`@mapcairn/geolint`) is a GeoJSON linter: a `geolint` command and a lib
 - `src/testing`: the independence and dependency-licence checks, run as tests.
 - `fixtures/<rule-id>/`: a passing and a failing input for each rule. `test-data/`: larger real-shaped inputs. `bench/`: the benchmarks. `scripts/`: the country outline build, the pack-and-install smoke test and the repository tooling.
 
-The repository is Apache-2.0. It started as `packages/geolint` in the MapCairn repository, which is AGPL-3.0, and it stays independent of it: it imports no MapCairn package, and its dependencies are permissive only (MIT, BSD, ISC, Apache-2.0, Unlicense, CC0, 0BSD). Nothing here may need a licence agreement of its own.
+The repository is Apache-2.0 and independent of MapCairn's AGPL-3.0 code: it imports no MapCairn package, and its dependencies are permissive only (MIT, BSD, ISC, Apache-2.0, Unlicense, CC0, 0BSD). Nothing here may need a licence agreement of its own.
 
 British English is the working language of the repository: docs, messages and copy. Nothing in the repository is translated.
 

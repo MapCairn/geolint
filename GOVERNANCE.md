@@ -2,7 +2,7 @@
 
 _Last updated: 2026-11-17_
 
-geolint is a small, volunteer-maintained project with one maintainer, the same as for [MapCairn](https://github.com/MapCairn/mapcairn), where it started. This document says who decides what, how decisions are made and recorded, how that can change, and what is not yet in place.
+geolint is a small, volunteer-maintained project with one maintainer. This document says who decides what, how decisions are made and recorded, how that can change, and what is not yet in place.
 
 ## Roles
 
@@ -46,7 +46,7 @@ Publishing rights on npm, once publishing starts, are a separate step and are no
 
 ## Continuity: not yet covered
 
-If the only maintainer were unavailable, the project could not continue with minimal interruption: there is no named, trusted second person with administrator access. No such person is recorded here, and none will be invented to fill the gap. The same gap is tracked for MapCairn in [MapCairn/mapcairn#4](https://github.com/MapCairn/mapcairn/issues/4), and a person who takes that role there would be the natural choice here.
+If the only maintainer were unavailable, the project could not continue with minimal interruption: there is no named, trusted second person with administrator access. No such person is recorded here, and none will be invented to fill the gap.
 
 What reduces the risk today: the code, the plans and the decisions are public, the licence lets anyone fork and publish it, and the package has no server or data to migrate. Credentials are never recorded in the repository.
 

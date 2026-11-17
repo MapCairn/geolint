@@ -54,4 +54,4 @@ A pull request is not merged until the comment is there. The `CLA` check on the 
 
 ## Changes
 
-- **1.0:** the first version. It is the MapCairn contributor licence agreement, version 1.2, with the Project and its licence changed to geolint and the Apache License, Version 2.0, and with the terms of that agreement's section 7 (for `packages/geolint`, licensed under the Apache License, Version 2.0) made part of sections 1 and 4. geolint was developed in the MapCairn repository (https://github.com/MapCairn/mapcairn) before it moved here, and a contribution made to it there was made under section 7 of that agreement.
+- **1.0:** the first version.

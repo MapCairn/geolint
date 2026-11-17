@@ -10,4 +10,4 @@ geolint is licensed under [Apache-2.0](LICENSE) (see also [`NOTICE`](NOTICE)). I
 
 The files in `test-data` are outlines taken from the same Natural Earth data, for tests, and are not part of the published package. The test, lint and benchmark tools (`vitest`, `@vitest/coverage-v8`, `fast-check`, `tinybench`, `typescript`, `@biomejs/biome`, `dependency-cruiser`, `@swc/core`, `lefthook`, `@types/node`) are development dependencies and are not part of what the package installs.
 
-The repository tooling in `scripts/` (the licence header, names, agent sync and contributor licence agreement checks) and the project's process documents were adapted from the [MapCairn](https://github.com/MapCairn/mapcairn) repository, by the same contributors. The code of conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org), version 2.1.
+The code of conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org), version 2.1.
