@@ -1,0 +1,9 @@
+.claude/settings.local.json
+.claude/worktrees/
+node_modules
+dist
+coverage
+*.log
+.tmp-*
+*.tsbuildinfo
+*.tgz

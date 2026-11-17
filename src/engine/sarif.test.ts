@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 import type { FileReport } from "./report.js";
 import { formatSarif, SARIF_SCHEMA, toUri } from "./sarif.js";
 import type { Finding, Rule } from "./types.js";
-import { VERSION } from "./version.js";
+import { INFORMATION_URI, VERSION } from "./version.js";
 
 const rule = (id: string, severity: Rule["severity"]): Rule => ({
   id,
@@ -198,17 +198,34 @@ describe("toUri", () => {
   });
 });
 
+interface Manifest {
+  readonly version: string;
+  readonly repository: { readonly url: string };
+}
+
+function readManifest(): Manifest {
+  return JSON.parse(
+    readFileSync(
+      path.resolve(
+        path.dirname(fileURLToPath(import.meta.url)),
+        "../../package.json",
+      ),
+      "utf8",
+    ),
+  ) as Manifest;
+}
+
 describe("VERSION", () => {
   it("equals the version in package.json", () => {
-    const manifest = JSON.parse(
-      readFileSync(
-        path.resolve(
-          path.dirname(fileURLToPath(import.meta.url)),
-          "../../package.json",
-        ),
-        "utf8",
-      ),
-    ) as { version: string };
-    expect(VERSION).toBe(manifest.version);
+    expect(VERSION).toBe(readManifest().version);
+  });
+});
+
+describe("INFORMATION_URI", () => {
+  it("is the web address of the repository package.json names", () => {
+    const repository = readManifest()
+      .repository.url.replace(/^git\+/, "")
+      .replace(/\.git$/, "");
+    expect(INFORMATION_URI).toBe(repository);
   });
 });
