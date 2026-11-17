@@ -1,6 +1,6 @@
 # Working with coding agents
 
-The project's skills and agents were written for Claude Code, and everyone is welcome to use the coding agent they prefer: Claude Code, Codex, opencode, GitHub Copilot, Antigravity, Cursor, Qwen Code or another. The rules live in one place, [`AGENTS.md`](../../AGENTS.md), and apply whichever tool you use. What differs is how much a tool can enforce: a rule is written as an instruction everywhere, and Claude Code can also back some of them with settings. This guide says what each tool reads, how to start, and what only works in Claude Code. The setup is the same as in the MapCairn repository, where geolint started.
+The project's skills and agents were written for Claude Code, and everyone is welcome to use the coding agent they prefer: Claude Code, Codex, opencode, GitHub Copilot, Antigravity, Cursor, Qwen Code or another. The rules live in one place, [`AGENTS.md`](../../AGENTS.md), and apply whichever tool you use. What differs is how much a tool can enforce: a rule is written as an instruction everywhere, and Claude Code can also back some of them with settings. This guide says what each tool reads, how to start, and what only works in Claude Code.
 
 ## One source for each thing
 
@@ -29,7 +29,7 @@ Tool limits, such as a list of allowed tools, are enforced only in Claude Code (
 
 ## What each tool reads
 
-This table was checked for the MapCairn repository on 2026-11-12 against each tool's own documentation, and the layout here is the same. A blank means the documentation did not say.
+This table was checked on 2026-11-12 against each tool's own documentation. A blank means the documentation did not say.
 
 |                | Instructions                                                  | Skills                                                 | Agents                                                                      |
 | -------------- | ------------------------------------------------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------- |

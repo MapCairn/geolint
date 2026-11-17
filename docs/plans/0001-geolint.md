@@ -1,8 +1,6 @@
 # 0001: geolint, a GeoJSON linter in its own Apache-2.0 package
 
-Status: done. The package is built as designed here; the follow-up speed and memory work is tracked in [#3](https://github.com/MapCairn/geolint/issues/3) and [#4](https://github.com/MapCairn/geolint/issues/4). Tracking issue: [#2](https://github.com/MapCairn/geolint/issues/2), closed when it was transferred to this repository.
-
-This plan was written as plan 0010 in the MapCairn repository, where geolint was first built as `packages/geolint`. It moved here with the package, renumbered and otherwise kept as it was: a path such as `packages/geolint/src` is `src` in this repository, and a section of `AGENTS.md` it names is MapCairn's.
+Status: done. The package is built as designed here; the follow-up speed and memory work is tracked in [#3](https://github.com/MapCairn/geolint/issues/3) and [#4](https://github.com/MapCairn/geolint/issues/4). Tracking issue: [#2](https://github.com/MapCairn/geolint/issues/2).
 
 ## Goal
 
@@ -14,9 +12,9 @@ This plan was written as plan 0010 in the MapCairn repository, where geolint was
 - Dependencies are few, permissive only (MIT, BSD, ISC, Apache-2.0, Unlicense, CC0, 0BSD) and at least seven days old (`AGENTS.md`, "Dependencies and lockfiles"). A test checks the installed production tree. Each one is justified in the package README.
 - The engine has no Node built-in (a second dependency-cruiser rule). Only `src/node` (files, glob, workers) and `src/cli` use Node.
 - Tests first, with the same coverage floor as the SDK packages (95 on every measure), and no exclusions. The command's logic is a `main(argv, io)` function the tests call, so spawned processes and worker threads need no coverage.
-- It does not publish to npm. The manifest stays `private` until the maintainer releases it ([MapCairn/mapcairn#1](https://github.com/MapCairn/mapcairn/issues/1) covers releases for the SDK packages).
+- It does not publish to npm. The manifest stays `private` until the maintainer releases it.
 - Adding a dataset needs the maintainer's decision (`AGENTS.md`, "Boundaries"). The country outlines are a build artefact of public-domain Natural Earth data, bundled only in this package, and the maintainer asked for them in the issue.
-- The permissive-licence check overlaps [MapCairn/mapcairn#198](https://github.com/MapCairn/mapcairn/issues/198), which asks for the same for the SDK packages. This plan covers geolint only and leaves that issue open.
+- The permissive-licence check covers geolint only.
 
 ## Design
 
