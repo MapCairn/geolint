@@ -1,8 +1,8 @@
 # 0001: geolint, a GeoJSON linter in its own Apache-2.0 package
 
-Status: in progress. Tracking issue: [MapCairn/mapcairn#259](https://github.com/MapCairn/mapcairn/issues/259).
+Status: done. The package is built as designed here; the follow-up speed and memory work is tracked in [#3](https://github.com/MapCairn/geolint/issues/3) and [#4](https://github.com/MapCairn/geolint/issues/4). Tracking issue: [#2](https://github.com/MapCairn/geolint/issues/2), closed when it was transferred to this repository.
 
-This plan was written as plan 0010 in the MapCairn repository, where geolint was first built as `packages/geolint`. It moved here with the package, renumbered and otherwise kept as it was: a path such as `packages/geolint/src` is `src` in this repository, a section of `AGENTS.md` it names is MapCairn's, and an issue number without a repository is a MapCairn issue.
+This plan was written as plan 0010 in the MapCairn repository, where geolint was first built as `packages/geolint`. It moved here with the package, renumbered and otherwise kept as it was: a path such as `packages/geolint/src` is `src` in this repository, and a section of `AGENTS.md` it names is MapCairn's.
 
 ## Goal
 
@@ -108,6 +108,6 @@ One pull request, with one commit for each step.
 
 ## Decided and open
 
-Decided on 2026-11-16: one pull request for the whole package; no npm release in this work; the package is labelled `enhancement` and `plan`, because the repository has no licence label; the first release is an MVP for speed, with the sweep-line speed-up and the shared ring view left to [MapCairn/mapcairn#261](https://github.com/MapCairn/mapcairn/issues/261); the pull request waits for a benchmark taken on a quiet machine before it merges; `--fix` with standard input is refused, `-` is not a file to write beside; findings of `info` severity do not change the exit code; a request the command cannot understand exits 3.
+Decided on 2026-11-16: one pull request for the whole package; no npm release in this work; the package is labelled `enhancement` and `plan`, because the repository has no licence label; the first release is an MVP for speed, with the sweep-line speed-up and the shared ring view left to [#3](https://github.com/MapCairn/geolint/issues/3); the pull request waits for a benchmark taken on a quiet machine before it merges; `--fix` with standard input is refused, `-` is not a file to write beside; findings of `info` severity do not change the exit code; a request the command cannot understand exits 3.
 
 Open: whether a later release should make `@mapcairn/geolint` public before the SDK packages (a release decision for the maintainer, with the licence check by a person first).

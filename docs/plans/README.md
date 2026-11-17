@@ -4,6 +4,8 @@ Most work needs only a GitHub issue with its design notes and task list. A plan 
 
 A plan gets its own pull request, reviewed before any code is written, only when the work will not start straight away. When it starts immediately, the plan file and its first step of implementation land in one pull request instead. The `plan-change` skill has the procedure.
 
-Open plans:
+Open plans: none.
 
-- [0001: geolint, a GeoJSON linter in its own Apache-2.0 package](0001-geolint.md), the design geolint was built to, tracking issue [MapCairn/mapcairn#259](https://github.com/MapCairn/mapcairn/issues/259).
+Done plans, kept as the design record:
+
+- [0001: geolint, a GeoJSON linter in its own Apache-2.0 package](0001-geolint.md), the design geolint was built to, tracking issue [#2](https://github.com/MapCairn/geolint/issues/2) (closed).
