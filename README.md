@@ -1,22 +1,28 @@
-# @mapcairn/geolint
+# geolint
+
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/MapCairn/geolint/badge)](https://scorecard.dev/viewer/?uri=github.com/MapCairn/geolint)
 
 A linter for GeoJSON. It finds the mistakes people make that schema validation does not: latitude and longitude swapped, projected coordinates left in a file that claims to be WGS 84, rings wound the wrong way, polygons that cross themselves, shapes that cross the antimeridian without being split, features in the wrong country. It works for any country, and a region hint sharpens the guesses.
 
-It is a `geolint` command and a library. The library's lint engine is pure (no Node built-in), so it runs in a browser or a Worker as well as in Node.
+It is a `geolint` command and a library (`@mapcairn/geolint`). The library's lint engine is pure (no Node built-in), so it runs in a browser or a Worker as well as in Node.
 
-This package is licensed under [Apache-2.0](LICENSE), unlike the rest of the MapCairn repository, which is AGPL-3.0. It is meant to be used freely inside other toolchains. It imports nothing from the other packages in the repository. It is not published to npm yet.
+It is for anyone who publishes or receives GeoJSON and wants to catch these mistakes before the data reaches a map: people preparing open data, people who review a pull request that changes a `.geojson` file, and tools that check uploads. Findings can be printed for a person, written as JSON, or written as SARIF for a code-scanning tool.
+
+geolint is licensed under [Apache-2.0](LICENSE), so it can be used freely inside other toolchains, and its dependencies are permissive only. It started as a package in the [MapCairn](https://github.com/MapCairn/mapcairn) repository and is independent of it: it imports nothing from MapCairn. It is not published to npm yet.
 
 ## Install and use
 
-Until it is published, build it from the repository:
+Until it is published, build it from this repository. It needs Node 24 or newer and npm 11 or newer.
 
 ```bash
-npm install
-npm run build -w @mapcairn/geolint
-node packages/geolint/dist/cli/bin.js data.geojson
+git clone https://github.com/MapCairn/geolint.git
+cd geolint
+npm ci
+npm run build
+node dist/cli/bin.js data.geojson
 ```
 
-Once published, `npx @mapcairn/geolint data.geojson` will do. It needs Node 24 or newer.
+To have a `geolint` command on your path, run `npm link` in the clone after the build, or install the packed tarball into another project (`npm pack`, then `npm install <path to the .tgz>` there). Once it is published, `npx @mapcairn/geolint data.geojson` will do.
 
 ```bash
 geolint <file|glob|-> [...]
@@ -68,7 +74,7 @@ for (const finding of report.findings) {
 }
 ```
 
-`lintBytes` takes an async iterable of `Uint8Array` and streams it, so it works on a `fetch` body or a file. `formatText`, `formatJson` and `formatSarif` turn reports into output, `fixBytes` streams a fixed copy of a document, and `rules` lists the rules. The engine is also exported as `@mapcairn/geolint/engine`. The Node helpers (reading files, expanding globs, linting a file, writing a fixed copy beside a file, worker threads) are in `@mapcairn/geolint/node`; the command itself is the `geolint` bin.
+`lintBytes` takes an async iterable of `Uint8Array` and streams it, so it works on a `fetch` body or a file. `formatText`, `formatJson` and `formatSarif` turn reports into output, `fixBytes` streams a fixed copy of a document, and `rules` lists the rules. The engine is also exported as `@mapcairn/geolint/engine`. The Node helpers (reading files, expanding globs, linting a file, writing a fixed copy beside a file, worker threads) are in `@mapcairn/geolint/node`; the command itself is the `geolint` bin. Until the package is published, install it from a packed tarball as above to import it by name.
 
 A rule is a pure function `(feature, context) => Finding[]`, one file in `src/engine/rules` and one line in the registry. A `Reader` turns bytes into features and the document's own members, so another format (NDJSON, TopoJSON) can be added without touching a rule; only GeoJSON is implemented.
 
@@ -121,7 +127,7 @@ Read this before you trust the heuristic rules.
 - **A fourth number in a position is a `structure` warning,** and `--fix` leaves it unrounded.
 - **A repeated `features` member is a `structure` error, and only the first array is checked.** `--fix` fixes the first and copies a later one through unchanged.
 - **A syntax error reports the input error alone.** The checks on the document as a whole are not run when the input could not be read to its end; the features read before the error are still checked.
-- **`self-intersection` slows down when very many edges meet at one vertex.** A ring that returns to the same hub vertex again and again (a thousand spokes) takes seconds, and tens of thousands of spokes take minutes, because the exact handling of many contacts at one point is not linear. Ordinary data is not affected. The sweep's speed is tracked in [#261](https://github.com/MapCairn/mapcairn/issues/261).
+- **`self-intersection` slows down when very many edges meet at one vertex.** A ring that returns to the same hub vertex again and again (a thousand spokes) takes seconds, and tens of thousands of spokes take minutes, because the exact handling of many contacts at one point is not linear. Ordinary data is not affected. The sweep's speed is tracked in [MapCairn/mapcairn#261](https://github.com/MapCairn/mapcairn/issues/261), which moves to this repository.
 - **Some invalid polygons are not reported:** a hole identical to its exterior, a hole that encloses its exterior, one hole inside another, a hole that shares a segment with the exterior, and (as above) a hole wholly outside it.
 - **`--fix` does not round a feature that rounding would damage.** Rounding to seven decimals can make a feature smaller than a metre cross itself or collapse onto repeated vertices. When that leaves more problems than the other fixes do alone, the feature is repaired without rounding, and its `precision` finding stays. `winding-order` is not judged, and not fixed, for a ring with a step of more than 180 degrees of longitude (`antimeridian` reports it), because the planar test cannot tell which way such a ring goes round the globe.
 - **`--fix` re-serialises a feature that it changes through `JSON.parse` and `JSON.stringify`.** An integer larger than 2^53 (a 64-bit identifier written as a number) loses precision, a number too large for a double becomes `null`, and a repeated key keeps only its last value, but only in a feature that needed a repair. Identifiers written as strings are safe. A feature that needed nothing keeps its original text.
@@ -148,7 +154,7 @@ Machine: Apple M4, 10 logical processors, 16 GB memory, macOS (Darwin 27.2.0), N
 | FeatureCollection, 500 MB       | 500.0 MB | 14.74 s | 33.9 MB/s | 509 MB      | 721,899  |
 | One polygon, 1,000,000 vertices | 23.5 MB  | 0.90 s  | 26.2 MB/s | 775 MB      | 1        |
 
-The speed target is met (18 to 34 MB/s) and the polygon target is met (0.9 s, 775 MB). The memory target for a collection is not met: peak memory is 447 MB at 50 MB and 509 MB at 500 MB, above 400 MB, though it grows by only about 60 MB for a tenfold larger file, so it does not follow the file size. The earlier laptop figures (3.9 MB/s on 50 MB) were taken on a different machine in normal use and are not comparable. Profiling showed that `self-intersection` (the exact sweep line) is about 80 percent of the CPU time on a collection of small polygons. The sweep and the shared ring reading, and the memory overshoot, are tracked in [#261](https://github.com/MapCairn/mapcairn/issues/261). To measure again, run `npm run build -w @mapcairn/geolint` and then `npm run bench -w @mapcairn/geolint`, on a quiet machine, with `-- --skip-large` to leave out the 500 MB file.
+The speed target is met (18 to 34 MB/s) and the polygon target is met (0.9 s, 775 MB). The memory target for a collection is not met: peak memory is 447 MB at 50 MB and 509 MB at 500 MB, above 400 MB, though it grows by only about 60 MB for a tenfold larger file, so it does not follow the file size. Profiling showed that `self-intersection` (the exact sweep line) is about 80 percent of the CPU time on a collection of small polygons. The sweep and the shared ring reading are tracked in [MapCairn/mapcairn#261](https://github.com/MapCairn/mapcairn/issues/261) and the memory overshoot in [MapCairn/mapcairn#266](https://github.com/MapCairn/mapcairn/issues/266); both issues move to this repository. To measure again, run `npm run build` and then `npm run bench`, on a quiet machine, with `-- --skip-large` to leave out the 500 MB file.
 
 ## What it adds
 
@@ -171,20 +177,23 @@ There are two direct runtime dependencies (three packages with `flatqueue`, whic
 | [`robust-predicates`](https://github.com/mourner/robust-predicates) | Unlicense | Exact orientation tests (Shewchuk's adaptive arithmetic), so winding and intersection decisions never depend on a rounding error. Hand-written float comparisons were ruled out |
 | [`flatbush`](https://github.com/mourner/flatbush)                   | ISC       | A static R-tree over the country polygons' bounding boxes, so a lookup touches only the polygons near a position (it brings `flatqueue`, also ISC)                              |
 
-A test fails if a production dependency of this package has a licence outside MIT, BSD, ISC, Apache-2.0, Unlicense, CC0 and 0BSD, or is AGPL, GPL or LGPL. There is no JSON parsing library (a small scanner finds the feature boundaries and `JSON.parse` reads one feature at a time) and no argument parser (`node:util` is enough). The country outlines are Natural Earth admin-0 country polygons (public domain, no credit required), taken from the [natural-earth-vector](https://github.com/nvkelso/natural-earth-vector) repository at commit `ca96624a56bd078437bca8184e78163e5039ad19`: the 1:110m file (SHA-256 `6866c877d39cba9c357620878839b336d569f8c662d3cfab4cb1dbe2d39c977f`) and, for the countries it leaves out, the 1:50m file (`3e458fc036ad0a66411f2c1e6cac49c5d7bfb81cb1123bc513b22511a2b7fdeb`). `scripts/build-countries.mjs` checks both checksums, quantises the rings to 1e-4 degrees and writes `src/engine/regions/countries.json` (the output is then formatted with Biome, so the committed file is larger than the script's raw output); it is loaded only when a region is given.
+A test (`src/testing/licences.test.ts`, which `npm run lint` runs as `licence:deps`) fails if a production dependency has a licence outside MIT, BSD, ISC, Apache-2.0, Unlicense, CC0 and 0BSD, or is AGPL, GPL or LGPL. There is no JSON parsing library (a small scanner finds the feature boundaries and `JSON.parse` reads one feature at a time) and no argument parser (`node:util` is enough). The country outlines are Natural Earth admin-0 country polygons (public domain, no credit required), taken from the [natural-earth-vector](https://github.com/nvkelso/natural-earth-vector) repository at commit `ca96624a56bd078437bca8184e78163e5039ad19`: the 1:110m file (SHA-256 `6866c877d39cba9c357620878839b336d569f8c662d3cfab4cb1dbe2d39c977f`) and, for the countries it leaves out, the 1:50m file (`3e458fc036ad0a66411f2c1e6cac49c5d7bfb81cb1123bc513b22511a2b7fdeb`). `scripts/build-countries.mjs` checks both checksums, quantises the rings to 1e-4 degrees and writes `src/engine/regions/countries.json` (the output is then formatted with Biome, so the committed file is larger than the script's raw output); it is loaded only when a region is given.
 
 ## Developing
 
 ```bash
-npm run build -w @mapcairn/geolint      # tsc, to dist/
-npm test -w @mapcairn/geolint
-npm run smoke -w @mapcairn/geolint      # build, npm pack, install the tarball outside the repo, run it
-npm run bench -w @mapcairn/geolint      # the benchmark; run the build first
-npm run bench:rules -w @mapcairn/geolint
+npm ci
+npm run build             # tsc, to dist/
+npm test
+npm run test:coverage     # the 95 percent floors
+npm run lint
+npm run smoke             # build, npm pack, install the tarball outside the repository, run it
+npm run bench             # the benchmark; run the build first
+npm run bench:rules
 ```
 
-Each rule has a passing and a failing fixture in `fixtures/<rule-id>/`, which one test runs through the whole engine. See [`ATTRIBUTIONS.md`](../../ATTRIBUTIONS.md) for the data and software credits and [`docs/plans/0010-geolint.md`](../../docs/plans/0010-geolint.md) for the design.
+Each rule has a passing and a failing fixture in `fixtures/<rule-id>/`, which one test runs through the whole engine. [`CONTRIBUTING.md`](CONTRIBUTING.md) says how to send a change, [`AGENTS.md`](AGENTS.md) holds the working rules for people and coding agents, [`ATTRIBUTIONS.md`](ATTRIBUTIONS.md) has the data and software credits, [`ROADMAP.md`](ROADMAP.md) says what is planned and what is not, and [`docs/plans/0001-geolint.md`](docs/plans/0001-geolint.md) is the design.
 
 ## Licence
 
-Apache-2.0. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE). Contributions to this package are licensed under Apache-2.0; the rest of the repository is AGPL-3.0 (see the root `README.md`, `CONTRIBUTING.md` and section 7 of `CLA.md`).
+Apache-2.0. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE). Contributions are licensed under Apache-2.0 too, and contributors agree to [`CLA.md`](CLA.md). Report a vulnerability privately as [`SECURITY.md`](SECURITY.md) says.
