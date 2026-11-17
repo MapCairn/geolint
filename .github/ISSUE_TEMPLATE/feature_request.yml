@@ -1,0 +1,23 @@
+name: Feature request
+description: Suggest a rule, an option or something else geolint should do
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What mistake in GeoJSON goes unreported, or what are you trying to do that geolint makes hard?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you would like
+      description: For a new rule, an example that should be reported and a similar one that should not.
+    validations:
+      required: true
+  - type: textarea
+    id: cost
+    attributes:
+      label: False alarms and cost
+      description: How sure could a rule be, what valid data might it flag by mistake, and would it need a new dependency or dataset?

@@ -4,8 +4,13 @@
   "description": "A linter for GeoJSON: the mistakes people make beyond schema validation, as a command and a library",
   "license": "Apache-2.0",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MapCairn/geolint.git"
+  },
   "type": "module",
   "sideEffects": false,
+  "packageManager": "npm@11.19.1",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
@@ -30,15 +35,29 @@
     "dist",
     "LICENSE",
     "NOTICE",
-    "README.md"
+    "README.md",
+    "ATTRIBUTIONS.md"
   ],
   "engines": {
-    "node": ">=24"
+    "node": ">=24",
+    "npm": ">=11.0.0"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
+    "lint": "biome check --error-on-warnings . && npm run depcruise && npm run licence && npm run licence:deps && npm run agents:check && npm run names:check",
+    "depcruise": "node scripts/depcruise.mjs",
+    "licence": "node scripts/licenceHeaders.mjs",
+    "licence:write": "node scripts/licenceHeaders.mjs --write",
+    "licence:deps": "vitest run src/testing/licences.test.ts",
+    "agents:sync": "node scripts/agents/sync.mjs",
+    "agents:check": "node scripts/agents/sync.mjs --check",
+    "names:check": "node scripts/names-check.mjs files",
+    "format": "biome format --write .",
+    "prepare": "lefthook install --force",
+    "check": "npm run lint && npm run typecheck && npm run test:coverage && npm run build && npm run smoke",
     "smoke": "node scripts/smoke.mjs",
     "build:countries": "node scripts/build-countries.mjs",
     "bench": "node bench/run.mjs",
@@ -49,10 +68,19 @@
     "robust-predicates": "3.0.3"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.6.6",
+    "@swc/core": "1.16.22",
     "@types/node": "26.6.6",
+    "@vitest/coverage-v8": "5.1.0",
+    "dependency-cruiser": "18.7.2",
     "fast-check": "4.10.2",
+    "lefthook": "2.2.2",
     "tinybench": "6.2.3",
     "typescript": "7.0.2",
     "vitest": "5.1.0"
+  },
+  "allowScripts": {
+    "lefthook": true,
+    "@swc/core": false
   }
 }

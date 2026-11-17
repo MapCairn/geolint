@@ -88,8 +88,15 @@ function must(result, what) {
 const work = mkdtempSync(path.join(tmpdir(), "geolint-smoke-"));
 try {
   must(run(NPM, ["run", "build"], { cwd: PACKAGE }), "npm run build");
+  // The repository's `prepare` script installs the git hooks and prints to
+  // standard output, which would break the JSON that `--json` asks for. The
+  // build above is the only preparation the package needs.
   const packed = must(
-    run(NPM, ["pack", "--pack-destination", work, "--json"], { cwd: PACKAGE }),
+    run(
+      NPM,
+      ["pack", "--ignore-scripts", "--pack-destination", work, "--json"],
+      { cwd: PACKAGE },
+    ),
     "npm pack",
   );
   const tarball = path.join(work, JSON.parse(packed.stdout)[0].filename);

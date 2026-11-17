@@ -1,0 +1,149 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
+  "linter": {
+    "enabled": true,
+    "domains": {
+      "test": "recommended"
+    },
+    "rules": {
+      "preset": "recommended",
+      "complexity": {
+        "noExcessiveCognitiveComplexity": {
+          "level": "error",
+          "options": { "maxAllowedComplexity": 25 }
+        }
+      },
+      "nursery": {
+        "noFloatingPromises": "error",
+        "noMisusedPromises": "error",
+        "noYamlBooleanKeys": "error",
+        "useExhaustiveSwitchCases": "error"
+      },
+      "suspicious": {
+        "noDeprecatedImports": "error",
+        "noConsole": {
+          "level": "error",
+          "options": { "allow": ["error", "warn"] }
+        },
+        "noDuplicateDependencies": "error",
+        "noImportCycles": "error",
+        "noShadow": "error"
+      },
+      "style": {
+        "noNestedTernary": "error",
+        "useBlockStatements": "error",
+        "useConsistentTypeDefinitions": "error",
+        "useConst": "error",
+        "useReadonlyClassProperties": "error"
+      }
+    }
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double",
+      "trailingCommas": "all"
+    }
+  },
+  "json": {
+    "formatter": {
+      "enabled": true
+    }
+  },
+  "markdown": {
+    "formatter": {
+      "enabled": true,
+      "formatEmbeds": false,
+      "proseWrap": "preserve"
+    }
+  },
+  "yaml": {
+    "linter": {
+      "enabled": true
+    },
+    "formatter": {
+      "enabled": true
+    }
+  },
+  "overrides": [
+    {
+      // The lint engine must run in a browser or a Worker as well as in Node,
+      // so it may not use a Node global. dependency-cruiser stops a Node import;
+      // this stops a global, which TypeScript allows because the tsconfig loads
+      // the Node types for the command.
+      "includes": ["src/engine/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedGlobals": {
+              "level": "error",
+              "options": {
+                "deniedGlobals": {
+                  "Buffer": "The geolint engine must run in a browser or a Worker as well as in Node. Use Uint8Array and TextDecoder, or put the Node code in src/node.",
+                  "process": "The geolint engine must run in a browser or a Worker as well as in Node. Take what it needs as an argument, or put the Node code in src/node.",
+                  "__dirname": "The geolint engine must run in a browser or a Worker as well as in Node. Use import.meta.url, or put the Node code in src/node.",
+                  "__filename": "The geolint engine must run in a browser or a Worker as well as in Node. Use import.meta.url, or put the Node code in src/node.",
+                  "require": "The geolint engine must run in a browser or a Worker as well as in Node. Use an ES module import.",
+                  "setImmediate": "The geolint engine must run in a browser or a Worker as well as in Node. Use queueMicrotask or setTimeout."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      // Tests may build Node inputs (a Buffer, a temporary file) to drive the engine.
+      "includes": ["src/engine/**/*.test.ts"],
+      "linter": {
+        "rules": {
+          "style": { "noRestrictedGlobals": "off" }
+        }
+      }
+    },
+    {
+      // Command line scripts and tests print for the person running them, so
+      // any console call is allowed there. Application code may only report a
+      // failure with console.error or console.warn.
+      "includes": ["**/*.test.ts", "scripts/**"],
+      "linter": {
+        "rules": {
+          "suspicious": { "noConsole": "off" }
+        }
+      }
+    },
+    {
+      // The workflow tests look for GitHub expressions such as
+      // "${{ github.event... }}" in plain strings, on purpose.
+      "includes": ["scripts/test/**"],
+      "linter": {
+        "rules": {
+          "suspicious": { "noTemplateCurlyInString": "off" }
+        }
+      }
+    }
+  ],
+  "files": {
+    "includes": [
+      "**",
+      "!**/dist",
+      "!**/node_modules",
+      "!**/.claude",
+      "!.agents",
+      "!.codex",
+      "!.opencode",
+      "!.qwen",
+      "!.github/agents"
+    ]
+  }
+}

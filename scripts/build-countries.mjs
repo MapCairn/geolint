@@ -160,10 +160,7 @@ const biome = spawnSync(
   process.execPath,
   [
     fileURLToPath(
-      new URL(
-        "../../../node_modules/@biomejs/biome/bin/biome",
-        import.meta.url,
-      ),
+      new URL("../node_modules/@biomejs/biome/bin/biome", import.meta.url),
     ),
     "format",
     "--write",
