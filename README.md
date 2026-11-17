@@ -8,7 +8,7 @@ It is a `geolint` command and a library (`@mapcairn/geolint`). The library's lin
 
 It is for anyone who publishes or receives GeoJSON and wants to catch these mistakes before the data reaches a map: people preparing open data, people who review a pull request that changes a `.geojson` file, and tools that check uploads. Findings can be printed for a person, written as JSON, or written as SARIF for a code-scanning tool.
 
-geolint is licensed under [Apache-2.0](LICENSE), so it can be used freely inside other toolchains, and its dependencies are permissive only. It started as a package in the [MapCairn](https://github.com/MapCairn/mapcairn) repository and is independent of it: it imports nothing from MapCairn. It is not published to npm yet.
+geolint is licensed under [Apache-2.0](LICENSE), so it can be used freely inside other toolchains, and its dependencies are permissive only. It is not published to npm yet.
 
 ## Install and use
 
