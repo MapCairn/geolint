@@ -1,0 +1,20 @@
+pre-commit:
+  commands:
+    biome:
+      run: npx biome check --write --error-on-warnings --no-errors-on-unmatched {staged_files}
+      stage_fixed: true
+    depcruise:
+      run: npm run depcruise
+    licence:
+      run: npm run licence
+    licence-deps:
+      run: npm run licence:deps
+    agents:
+      run: npm run agents:check
+    names:
+      run: npm run names:check
+
+commit-msg:
+  commands:
+    names:
+      run: node scripts/names-check.mjs message {1}
