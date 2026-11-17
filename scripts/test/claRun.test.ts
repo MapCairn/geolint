@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright MapCairn contributors
 import { describe, expect, it } from "vitest";
+// @ts-expect-error The scripts are dependency-free JavaScript with JSDoc types.
 import { findAdministrators } from "../cla/admins.mjs";
 import {
   AGREEMENT_SENTENCE,
@@ -9,7 +10,9 @@ import {
   COMMENT_MARKER,
   parseSignatures,
   serialiseSignatures,
+  // @ts-expect-error The scripts are dependency-free JavaScript with JSDoc types.
 } from "../cla/cla.mjs";
+// @ts-expect-error The scripts are dependency-free JavaScript with JSDoc types.
 import { run } from "../cla/run.mjs";
 
 interface User {

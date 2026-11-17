@@ -6,6 +6,7 @@ import {
   hasHeader,
   namesAnIdentifier,
   withHeader,
+  // @ts-expect-error The scripts are dependency-free JavaScript with JSDoc types.
 } from "../licenceHeaders.mjs";
 
 const AGPL =

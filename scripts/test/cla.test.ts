@@ -15,6 +15,7 @@ import {
   isAgreementComment,
   parseSignatures,
   serialiseSignatures,
+  // @ts-expect-error The scripts are dependency-free JavaScript with JSDoc types.
 } from "../cla/cla.mjs";
 
 const REPO = path.resolve(

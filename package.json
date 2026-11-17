@@ -35,7 +35,8 @@
     "dist",
     "LICENSE",
     "NOTICE",
-    "README.md"
+    "README.md",
+    "ATTRIBUTIONS.md"
   ],
   "engines": {
     "node": ">=24",

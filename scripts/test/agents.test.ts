@@ -15,12 +15,12 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-// @ts-expect-error The agent scripts are dependency-free JavaScript with JSDoc types.
 import {
   findDrift,
   plannedFiles,
   skillProblems,
   writePlan,
+  // @ts-expect-error The agent scripts are dependency-free JavaScript with JSDoc types.
 } from "../agents/plan.mjs";
 import {
   parseAgent,
