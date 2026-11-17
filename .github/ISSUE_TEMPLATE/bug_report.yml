@@ -1,0 +1,42 @@
+name: Bug report
+description: geolint reports something wrong, misses a mistake, or fails
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: The command or library call you ran, and what went wrong. Paste the output or the finding.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: input
+    attributes:
+      label: A small input that shows it
+      description: The smallest GeoJSON that reproduces it, in a code block. Use made-up or public data only, and remove anything you do not want to share, because issues are public.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: geolint version, Node version and operating system
+      placeholder: geolint 0.0.0 built from main, Node 24.11, macOS 26
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - A rule (a false alarm or a missed mistake)
+        - The command (options, exit codes, output formats)
+        - The library
+        - --fix
+        - Performance or memory
+        - Other

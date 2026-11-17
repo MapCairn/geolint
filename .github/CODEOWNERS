@@ -1,0 +1,27 @@
+# The maintainers are asked to review changes to the roadmap, which says what
+# the project will and will not do, to the contributor licence agreement, and
+# to the files that steer agents, CI and what runs on a developer's machine,
+# because a change there reaches every tool. This only requests a review; the
+# repository ruleset does not require a code owner's approval.
+/ROADMAP.md @MapCairn/maintainers
+/CLA.md @MapCairn/maintainers
+/AGENTS.md @MapCairn/maintainers
+/CLAUDE.md @MapCairn/maintainers
+/.claude/ @MapCairn/maintainers
+/.agents/ @MapCairn/maintainers
+/.codex/ @MapCairn/maintainers
+/.opencode/ @MapCairn/maintainers
+/.qwen/ @MapCairn/maintainers
+/.github/ @MapCairn/maintainers
+/scripts/ @MapCairn/maintainers
+/lefthook.yml @MapCairn/maintainers
+/.npmrc @MapCairn/maintainers
+/package.json @MapCairn/maintainers
+/package-lock.json @MapCairn/maintainers
+/vitest.config.ts @MapCairn/maintainers
+/tsconfig.json @MapCairn/maintainers
+/tsconfig.build.json @MapCairn/maintainers
+/biome.jsonc @MapCairn/maintainers
+/.dependency-cruiser.cjs @MapCairn/maintainers
+/src/testing/ @MapCairn/maintainers
+/docs/guides/working-with-agents.md @MapCairn/maintainers
