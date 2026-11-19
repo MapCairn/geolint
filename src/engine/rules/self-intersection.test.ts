@@ -56,6 +56,16 @@ const SQUARE = [
   [0, 0],
 ];
 
+/** The two outer corners of thin triangular petal number `petal` of the flower, whose other corner is the centre. */
+function petalTips(petal: number): number[][] {
+  const centre = (2 * Math.PI * petal) / FLOWER_PETALS;
+  const half = Math.PI / (4 * FLOWER_PETALS);
+  return [centre - half, centre + half].map((angle) => [
+    FLOWER_RADIUS * Math.cos(angle),
+    FLOWER_RADIUS * Math.sin(angle),
+  ]);
+}
+
 /** A regular star polygon with `points` vertices, joining every `step`th: crossing many times. */
 function star(points: number, step: number): number[][] {
   const ring: number[][] = [];
@@ -509,21 +519,9 @@ describe("selfIntersectionRule", () => {
   });
 
   it("checks a ring whose thousands of edges meet at one point in time that follows its size", () => {
-    const half = Math.PI / (4 * FLOWER_PETALS);
     const flower: number[][] = [];
     for (let petal = 0; petal < FLOWER_PETALS; petal++) {
-      const centre = (2 * Math.PI * petal) / FLOWER_PETALS;
-      flower.push(
-        [0, 0],
-        [
-          FLOWER_RADIUS * Math.cos(centre - half),
-          FLOWER_RADIUS * Math.sin(centre - half),
-        ],
-        [
-          FLOWER_RADIUS * Math.cos(centre + half),
-          FLOWER_RADIUS * Math.sin(centre + half),
-        ],
-      );
+      flower.push([0, 0], ...petalTips(petal));
     }
     flower.push([0, 0]);
     const started = process.cpuUsage();
@@ -533,6 +531,26 @@ describe("selfIntersectionRule", () => {
       true,
     );
     expect(findings.length).toBeGreaterThan(0);
+    expect((used.user + used.system) / 1000).toBeLessThan(FLOWER_BUDGET_MS);
+  });
+
+  it("checks a polygon whose thousands of holes all meet at one point in time that follows their number", () => {
+    const exterior = [
+      [-2 * FLOWER_RADIUS, -2 * FLOWER_RADIUS],
+      [2 * FLOWER_RADIUS, -2 * FLOWER_RADIUS],
+      [2 * FLOWER_RADIUS, 2 * FLOWER_RADIUS],
+      [-2 * FLOWER_RADIUS, 2 * FLOWER_RADIUS],
+      [-2 * FLOWER_RADIUS, -2 * FLOWER_RADIUS],
+    ];
+    const holes = Array.from({ length: FLOWER_PETALS }, (_, petal) => [
+      [0, 0],
+      ...petalTips(petal),
+      [0, 0],
+    ]);
+    const started = process.cpuUsage();
+    const findings = check(polygonFeature(exterior, ...holes));
+    const used = process.cpuUsage(started);
+    expect(findings).toEqual([]);
     expect((used.user + used.system) / 1000).toBeLessThan(FLOWER_BUDGET_MS);
   });
 
