@@ -57,13 +57,17 @@ When you start an agent, copy the brief block from `pick-up-issue` ("Briefing an
 
 Use the small tier (in Claude Code, haiku) where the work is mechanical and the result is easy to check: searching and listing, applying a fully specified edit, running a fixed check and summarising it, formatting, and ticking boxes. Do not use it for design decisions, geometry or parsing code, reasoning about hostile input, or a review that must find what the author missed. Brief a small model with one task, the exact files, the exact change or question, the format of the answer and a stop condition. When a small-tier brief fails, escalate to the default tier with a clearer brief instead of retrying the same one.
 
+## Your own preferences
+
+`AGENTS.md` holds project rules only. How much you want an agent to delegate, which models you prefer and how terse it should be go in a git-ignored local file, not in a shared one. [`personal-preferences.md`](personal-preferences.md) says where that file is for each tool.
+
 ## Names the project keeps out
 
 `npm run lint`, the `commit-msg` hook and the CI pull request check refuse a name the maintainer keeps only as a hash (`scripts/names-check.mjs`) and print where it is, never what it is, so delete the text at that location and do not try to find out what matched.
 
 ## Only in Claude Code
 
-- The Workflow tool and its opt-in rule, and the `fable` model rule, in `CLAUDE.md`.
+- The model names and the `fable` model rule, in `CLAUDE.md`, and `CLAUDE.local.md` for your own preferences.
 - Tool limits on agents (their `tools` lists).
 
 ## What has not been checked

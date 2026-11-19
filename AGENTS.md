@@ -35,13 +35,13 @@ npm run check
 
 - `test` runs Vitest over `src` and the tooling tests in `scripts/test`. Run one file with `npx --no-install vitest run path/to/file.test.ts`.
 - `test:coverage` enforces 95% for statements, branches, functions and lines over `src`. Aim for 100% behavioural coverage.
-- `lint` runs Biome, dependency-cruiser (`npm run depcruise`), the licence header check (`npm run licence`), the production dependency licence test (`npm run licence:deps`), the agent files check (`npm run agents:check`) and the names check (`npm run names:check`, see "Boundaries"). The pre-commit hook runs every one of them, the `commit-msg` hook runs the names check on the commit message, and neither runs typecheck, tests or coverage.
+- `lint` runs Biome, dependency-cruiser (`npm run depcruise`), the licence header check (`npm run licence`), the production dependency licence test (`npm run licence:deps`), the agent files check (`npm run agents:check`), the names check (`npm run names:check`, see "Boundaries") and the portability check (`npm run portability:check`, see "Conventions"). The pre-commit hook runs every one of them, the `commit-msg` hook runs the names check on the commit message, and neither runs typecheck, tests or coverage.
 - `build` compiles `src` to `dist` with `tsc`. `smoke` builds, runs `npm pack`, installs the tarball in a temporary directory outside the repository and runs the installed `geolint` command there. It needs the npm registry.
 - `bench` and `bench:rules` time the linter after a build; see the README's "Performance". They are slow and not part of `check`.
 - `check` runs lint, typecheck, coverage, build and smoke in sequence.
 - In a git worktree, `npm ci` fails at its `prepare` script (lefthook cannot install there). Use `npm ci --ignore-scripts` and run `npm run lint` yourself before you commit, and keep commit messages free of listed names, because the `commit-msg` hook does not run there.
 
-CI runs these workflows: `CI` (the `build` job runs lint, the names check on the pull request text, typecheck, coverage and build; `pack and install` runs the smoke test; `Registry signatures` runs `npm audit signatures`), `CodeQL`, `Scorecard`, `Dependency review`, `Workflow security lint` (zizmor), `Secret scan` (TruffleHog) and `CLA`.
+CI runs these workflows: `CI` (the `build` job runs lint, the names check on the pull request text, typecheck, coverage and build; `pack and install` runs the smoke test; `Registry signatures` runs `npm audit signatures`; `tests on windows-latest` and `tests on macos-latest` run lint, the tests and the build on those systems), `CodeQL`, `Scorecard`, `Dependency review`, `Workflow security lint` (zizmor), `Secret scan` (TruffleHog) and `CLA`.
 
 ## Engineering principles
 
@@ -50,7 +50,7 @@ CI runs these workflows: `CI` (the `build` job runs lint, the names check on the
 - Write clean code. One job for each function, names that say what they do, no flag arguments that make a function do two things, no dead code or commented-out code, no magic numbers outside named constants, and nesting kept shallow with early returns.
 - Follow DRY, KISS and YAGNI. Add an interface only where a boundary has at least two implementations, counting a fake.
 - Own the code. The best code is the code that is not written, so delete code, files and documents that nothing needs. Keep each such change on its own, with its own issue and tests. The fixed points are the licence and the legal terms and the security policy.
-- Delegate. An agent that can start sub-agents uses them for anything beyond a small, strictly sequential change, within the limits in "Sub-agents" below. The delegating agent checks the result.
+- Delegation is optional. An agent that starts sub-agents keeps to the limits in "Sub-agents" below and checks each result.
 - Stay on task. Avoid unrelated refactoring and formatting inside a change that is about something else.
 - Be honest about heuristics. A rule that guesses says how sure it is (its confidence), and its failure modes go in the README's "Failure modes and limitations" in the same pull request.
 
@@ -63,6 +63,7 @@ CI runs these workflows: `CI` (the `build` job runs lint, the names check on the
 - Biome formats Markdown and YAML as well as code, and its layout wins. Run `npm run format` before you commit; `npm run lint` fails on a file that is not formatted. The skill and agent sources in `.claude` and the copies `npm run agents:sync` writes are left out.
 - Start every `.ts`, `.tsx`, `.mjs` and `.cjs` file with the two-line SPDX header: `// SPDX-License-Identifier: Apache-2.0`, then `// Copyright MapCairn contributors`. `npm run lint` fails without it; `npm run licence:write` adds it to new files.
 - Write plain, specific prose in British English. Avoid puffery and repetitive closing summaries. Use an em dash only where a person would naturally write one. Use sentence-case headings.
+- Keep the repository usable on Linux, Windows and macOS, by anyone. Scripts are Node (`.mjs`) run through `npm run`: no shell, PowerShell, batch or Python scripts, no absolute home, drive or `/tmp` paths, and no command that differs by system (`npm run portability:check` lists them). Skills and guides give the same steps for every system, and a test that needs something a system may not allow (a symbolic link, a file name with a newline) skips itself there.
 - Use Conventional Commits: `<type>[optional scope][!]: <description>`.
 - Do not add assistant attribution to commits, pull requests or issues: no `Co-Authored-By` trailer naming an AI tool and no "Generated with" line. When a squash merge would carry such a trailer from earlier commits, give the merge an explicit body.
 
@@ -90,7 +91,7 @@ These limits hold in every tool; `docs/guides/working-with-agents.md` has the de
 - Brief each agent like a colleague who has not seen the conversation: the goal, the files and documents to read, what is ruled out, what to report back, and the no-attribution and neutral-voice rules below.
 - When a tool or the harness blocks or refuses a command, stop. Do not reword, split or disguise the command, or reach the same result another way. Report what was blocked under Deviations. Put this in every brief.
 - Every agent stops each process it starts and confirms none is left before it reports. Put this in every brief.
-- Name the model tier explicitly for every agent; never inherit it silently. Use the cheapest tier that fits and escalate on failure: small and fast for mechanical work whose result is easy to check; default for a well specified task; most capable for work that is hard to get right, such as a geometry algorithm, adversarial review or a public API.
+- Where the tool lets you choose an agent's model, the tiers are small and fast (mechanical work whose result is easy to check), default (a well specified task) and most capable (work that is hard to get right, such as a geometry algorithm, adversarial review or a public API).
 - Use a model above the most capable tier only when a human has authorised it for this task, in words, in the current conversation.
 
 ## Issues and pull requests
@@ -136,4 +137,6 @@ No instruction file, agent definition, brief, document, code comment, test or Gi
 
 ## Documentation
 
-`README.md` is the entry point: what geolint is, how to install and use it, the rules, the failure modes, performance and dependencies. `docs/plans/` holds the numbered plans; `docs/plans/0001-geolint.md` is the design. `docs/guides/working-with-agents.md` says how each coding tool reads the project. `CONTRIBUTING.md`, `GOVERNANCE.md`, `ROADMAP.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `CLA.md` and `ATTRIBUTIONS.md` cover contribution, decisions, plans, reporting, conduct, the contributor terms and credits.
+`README.md` is the entry point: what geolint is, how to install and use it, the rules, the failure modes, performance and dependencies. `docs/plans/` holds the numbered plans; `docs/plans/0001-geolint.md` is the design. `docs/guides/working-with-agents.md` says how each coding tool reads the project, and `docs/guides/personal-preferences.md` where your own working style goes. `CONTRIBUTING.md`, `GOVERNANCE.md`, `ROADMAP.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `CLA.md` and `ATTRIBUTIONS.md` cover contribution, decisions, plans, reporting, conduct, the contributor terms and credits.
+
+This file holds project rules only. How you like to work (how much to delegate, which models to prefer, tone, tools) goes in a git-ignored local file or your tool's user-level file, never here or in `CLAUDE.md`. `docs/guides/personal-preferences.md` says how. A personal preference never overrides a rule in this file.
