@@ -42,6 +42,13 @@ export interface SweepOptions {
    */
   readonly limit?: number;
   /**
+   * Reports only intersections of this kind. Pairs of other kinds are left out
+   * and do not count towards `limit`. Asking for `cross` is also what keeps a
+   * point where very many segments meet linear: the pairs there that only touch
+   * or overlap are never looked at one by one.
+   */
+  readonly only?: IntersectionKind;
+  /**
    * Whether to leave a pair out of the report. It is called for pairs that
    * meet, possibly more than once for the same pair, so it must depend only on
    * its arguments. An ignored pair still takes part in the sweep, so crossings
@@ -525,6 +532,7 @@ class Sweep {
   private readonly edges: readonly Edge[];
   private readonly limit: number;
   private readonly ignore: NonNullable<SweepOptions["ignore"]>;
+  private readonly only: IntersectionKind | undefined;
   private readonly found = new Map<number, Contact>();
   private readonly results: Intersection[] = [];
   private readonly crossings = new MinHeap<SweepPoint>(comparePoints);
@@ -545,6 +553,7 @@ class Sweep {
     });
     this.limit = options.limit ?? Number.POSITIVE_INFINITY;
     this.ignore = options.ignore ?? (() => false);
+    this.only = options.only;
   }
 
   run(): SweepResult {
@@ -704,7 +713,7 @@ class Sweep {
     if (contact === undefined) {
       return undefined;
     }
-    if (this.ignore(first, second, contact.kind)) {
+    if (this.isLeftOut(first, second, contact.kind)) {
       if (contact.crossing !== undefined) {
         this.found.set(key, contact);
       }
@@ -718,6 +727,17 @@ class Sweep {
       point: contact.point,
     });
     return contact;
+  }
+
+  private isLeftOut(
+    first: number,
+    second: number,
+    kind: IntersectionKind,
+  ): boolean {
+    return (
+      (this.only !== undefined && kind !== this.only) ||
+      this.ignore(first, second, kind)
+    );
   }
 
   /** Tests two edges that have just become neighbours, and queues their crossing if it lies ahead. */
@@ -743,6 +763,59 @@ class Sweep {
     }
   }
 
+  private startsAt(id: number, point: SweepPoint): boolean {
+    return (
+      point.exact === undefined &&
+      samePosition(this.edge(id).left, point.position)
+    );
+  }
+
+  /**
+   * Records the proper crossings among the edges through a point, and nothing
+   * else. Two edges that meet at a point where either of them ends or starts
+   * only touch or overlap there, so only the edges that pass straight through
+   * can cross, and of those only the ones on different lines. Sorted by the way
+   * they leave the point, edges on one line sit together, so each edge is
+   * paired with the edges after its own line and the work follows the crossings
+   * found, not the square of the edges that end at the point.
+   */
+  private recordCrossings(members: readonly number[], point: SweepPoint): void {
+    const through = members.filter(
+      (id) => !this.endsAt(id, point) && !this.startsAt(id, point),
+    );
+    through.sort((a, b) => this.compareLeaving(a, b));
+    const lineEnds = this.lineEnds(through);
+    for (let i = 0; i < through.length && !this.full(); i++) {
+      for (
+        let j = lineEnds[i] as number;
+        j < through.length && !this.full();
+        j++
+      ) {
+        this.record(through[i] as number, through[j] as number);
+      }
+    }
+  }
+
+  /** For each edge of a list sorted by direction, the index after the last edge on its line. */
+  private lineEnds(sorted: readonly number[]): number[] {
+    const ends: number[] = new Array(sorted.length);
+    let end = sorted.length;
+    for (let i = sorted.length - 1; i >= 0; i--) {
+      const next = sorted[i + 1];
+      if (next !== undefined && !this.sameLine(sorted[i] as number, next)) {
+        end = i + 1;
+      }
+      ends[i] = end;
+    }
+    return ends;
+  }
+
+  /** Whether two edges through one point lie on one line. */
+  private sameLine(a: number, b: number): boolean {
+    const first = this.edge(a);
+    return orientation(first.left, first.right, this.edge(b).right) === 0;
+  }
+
   /**
    * Handles one point of the sweep: takes out every edge that passes through
    * it, reports the pairs among them and the edges starting here, puts back
@@ -761,7 +834,11 @@ class Sweep {
     for (const id of starts) {
       members.push(id);
     }
-    this.recordAll(members);
+    if (this.only === "cross") {
+      this.recordCrossings(members, point);
+    } else {
+      this.recordAll(members);
+    }
     const continuing = members.filter((id) => !this.endsAt(id, point));
     continuing.sort((a, b) => this.compareLeaving(a, b));
     let middle: TreapNode | undefined;
@@ -853,9 +930,9 @@ export function findRingIntersections(
     (closed && first === 0 && second === edges.length - 1);
   const result = findSegmentIntersections(edges, {
     limit: options.limit,
+    only: options.only,
     ignore: (first, second, kind) =>
-      (options.only !== undefined && kind !== options.only) ||
-      (kind === "touch" && adjacent(first, second)),
+      kind === "touch" && adjacent(first, second),
   });
   return {
     stopped: result.stopped,

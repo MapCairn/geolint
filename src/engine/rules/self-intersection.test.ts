@@ -9,6 +9,11 @@ const CONTEXT: RuleContext = { regions: [], countries: undefined };
 const CIRCLE_DEGREES = 360;
 const STAR_POINTS = 21;
 const ZIGZAG_SEGMENTS = 14;
+/** Petals of the flower ring: 16,000 of its edges meet at the centre. */
+const FLOWER_PETALS = 8000;
+const FLOWER_RADIUS = 1000;
+/** Checking the 16,000 edges pair by pair takes over a minute; the sweep takes a fraction of a second. */
+const FLOWER_BUDGET_MS = 10_000;
 
 interface Expected {
   readonly path: string;
@@ -501,6 +506,34 @@ describe("selfIntersectionRule", () => {
         finding.message.includes("more intersections"),
       ),
     ).toBe(true);
+  });
+
+  it("checks a ring whose thousands of edges meet at one point in time that follows its size", () => {
+    const half = Math.PI / (4 * FLOWER_PETALS);
+    const flower: number[][] = [];
+    for (let petal = 0; petal < FLOWER_PETALS; petal++) {
+      const centre = (2 * Math.PI * petal) / FLOWER_PETALS;
+      flower.push(
+        [0, 0],
+        [
+          FLOWER_RADIUS * Math.cos(centre - half),
+          FLOWER_RADIUS * Math.sin(centre - half),
+        ],
+        [
+          FLOWER_RADIUS * Math.cos(centre + half),
+          FLOWER_RADIUS * Math.sin(centre + half),
+        ],
+      );
+    }
+    flower.push([0, 0]);
+    const started = process.cpuUsage();
+    const findings = check(polygonFeature(flower));
+    const used = process.cpuUsage(started);
+    expect(findings.every((finding) => finding.severity === "warning")).toBe(
+      true,
+    );
+    expect(findings.length).toBeGreaterThan(0);
+    expect((used.user + used.system) / 1000).toBeLessThan(FLOWER_BUDGET_MS);
   });
 
   it("does not claim more when a ring has fewer crossings than the cap", () => {
