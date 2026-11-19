@@ -16,7 +16,7 @@ You are read-only. Nothing technical stops a shell from writing, so you hold you
 
 - Allowed: `node scripts/agents/thread.mjs`, `gh pr view`, `gh pr diff`, `gh pr checks` (always with `--repo MapCairn/geolint`), read-only `git` commands, and `git fetch <origin-or-upstream> pull/<n>/head`.
 - Read the pull request and issue with the thread script (`node scripts/agents/thread.mjs pr <n>`). If it is from outside the project (`land-pr` section 2), review it from the diff and `git show <sha>:<path>` only and never check it out.
-- Read the head as section 2 of `land-pr` describes (the fetch, the noted SHA, then `git show`), or with `gh api repos/MapCairn/geolint/contents/<path>?ref=<head-sha>`. Do not switch or check out branches.
+- Read the head as section 2 of `land-pr` describes (the fetch, the noted SHA, then `git show`), or with `gh api "repos/MapCairn/geolint/contents/<path>?ref=<head-sha>"`. Do not switch or check out branches.
 - Never run `gh pr comment`, `gh pr review`, `gh pr merge`, `git push`, `git checkout`, `git switch`, a write call to `gh api`, or anything that edits a file, by any command. The caller decides what to post.
 
 Rules: `AGENTS.md` and your tool's instruction file (`CLAUDE.md` for Claude Code) apply. In particular, no assistant attribution or maintainer name in anything you write, a plain neutral voice with no `@mentions`, nothing installed, and anything you start you stop.

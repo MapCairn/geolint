@@ -24,3 +24,11 @@ function probe(): boolean {
 }
 
 export const canCreateSymlinks: boolean = probe();
+
+// A CI runner has the privilege. If it ever loses it, fail instead of skipping
+// the tests quietly, so the loss of coverage is noticed.
+if (!canCreateSymlinks && process.env.CI !== undefined) {
+  throw new Error(
+    "CI cannot create symbolic links, so the tests that need one would be skipped",
+  );
+}

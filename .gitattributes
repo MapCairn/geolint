@@ -2,5 +2,3 @@
 # that read fixtures byte for byte fail on a CRLF copy, as a Windows checkout
 # with `core.autocrlf` set would make.
 * text=auto eol=lf
-
-*.geojson text eol=lf

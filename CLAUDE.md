@@ -6,7 +6,7 @@ The skills in `.claude/skills/` (`create-issue`, `plan-change`, `split-plan`, `p
 
 ## Models
 
-In Claude Code the tiers in `AGENTS.md` are `haiku` (small and fast), `sonnet` (default) and `opus` (most capable). Set the `model` parameter of an `Agent` call on purpose: leaving it out inherits the session's model. Agents started through a Workflow script count towards the limit on how many run at once.
+In Claude Code the tiers in `AGENTS.md` are `haiku` (small and fast), `sonnet` (default) and `opus` (most capable). Set the `model` parameter on every `Agent` call: leaving it out inherits the session's model, which may be the one above the most capable tier. Agents started through a Workflow script count towards the limit on how many run at once.
 
 `fable` is the model above them, so the rule in `AGENTS.md` on a model above the most capable tier applies to it: never start a `fable` agent or set `model: fable` without that authorisation. If you think a task needs it, say why and ask.
 

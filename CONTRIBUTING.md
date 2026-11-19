@@ -21,7 +21,7 @@ npm run test:coverage
 npm run build
 ```
 
-The repository works on Linux, macOS and Windows, and CI runs the tests on all three. Every script is Node, run through `npm run`, so the same commands work in bash, zsh, PowerShell and cmd. `.gitattributes` keeps line endings as LF in every checkout. On Windows, a few tests create symbolic links, which Windows allows only in developer mode or to an administrator; without that they skip themselves, and CI still runs them. `npm run portability:check` (part of `npm run lint`) fails on an absolute home or drive path or a command that differs between systems, in the scripts, skills and guides.
+The repository works on Linux, macOS and Windows, and CI runs the tests on all three. Every script is Node, run through `npm run`, so the same commands work in bash, zsh, PowerShell and cmd. `.gitattributes` keeps line endings as LF in every checkout. On Windows, some tests create symbolic links, which Windows allows only in developer mode or to an administrator; without that they skip themselves, and CI still runs them. `npm run portability:check` (part of `npm run lint`) fails on an absolute home or drive path or a command that differs between systems, in the scripts, skills and guides.
 
 `npm run check` runs lint, typecheck, coverage, build and the pack-and-install smoke test (`npm run smoke`) in sequence. Run one test file with `npx --no-install vitest run path/to/file.test.ts`. Coverage must reach 95% for statements, branches, functions and lines over `src`. Aim for complete behavioural coverage rather than exclusions.
 

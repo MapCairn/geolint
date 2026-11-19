@@ -66,6 +66,7 @@ describe("parseArguments", () => {
     [["42", "out.md", "--repo", "a/b", "extra"]],
     [["42", "out.md", "extra"]],
     [["42", "out.md", "--unknown"]],
+    [["42", "out.md", "--repo", "--force"]],
   ])("refuses %j", (args) => {
     expect(parseArguments(args)).toBeUndefined();
   });

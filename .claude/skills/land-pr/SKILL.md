@@ -56,7 +56,7 @@ The required checks are named in the repository ruleset (`gh api repos/MapCairn/
 Read what the bots say as well as the check list. Once CI has started, and again before you merge:
 
 ```bash
-gh api "repos/MapCairn/geolint/code-scanning/alerts?pr=<n>&state=open" --jq '.[] | "\(.rule.id) \(.most_recent_instance.location.path):\(.most_recent_instance.location.start_line) \(.most_recent_instance.message.text)"'
+gh api "repos/MapCairn/geolint/code-scanning/alerts?pr=<n>&state=open" --jq ".[] | [.rule.id, .most_recent_instance.location.path, .most_recent_instance.location.start_line, .most_recent_instance.message.text] | @tsv"
 ```
 
 Read the conversation too with the thread script (`node scripts/agents/thread.mjs pr <n>`; it also lists unresolved review threads), and read the issue again before you merge. Check what a scanner reports against the code (a finding is a claim, not an order), and fix what is real in a new commit, or say in a comment why the alert is wrong.

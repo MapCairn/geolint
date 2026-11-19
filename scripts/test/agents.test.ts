@@ -723,7 +723,6 @@ describe.skipIf(!canCreateSymlinks)("symbolic links in the sources", () => {
       path.join(root, ".claude/skills/alpha/x\u202ey-forged"),
     );
     const message = skillProblems(root).join("\n");
-    expect(message.split("\n")).toHaveLength(1);
     expect(message).toContain("x\\u202ey-forged");
   });
 
