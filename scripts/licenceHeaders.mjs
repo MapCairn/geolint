@@ -14,7 +14,7 @@
  */
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { isEntryPoint } from "./entryPoint.mjs";
 
 const IDENTIFIER = "Apache-2.0";
 /** The two header lines every source file starts with. */
@@ -117,6 +117,6 @@ function main() {
   }
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   main();
 }

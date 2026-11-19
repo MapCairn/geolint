@@ -25,7 +25,7 @@ One issue per step, in plan order. Each body has: `Part of #<tracker>` and the p
 
 ## 4. Update the tracker
 
-Start from the current body (`gh issue view <tracker> --repo MapCairn/geolint --json body --jq .body > <path>`), add one `- [ ] #<child>` line per child in order, keep all other text unchanged, and save it with `gh issue edit <tracker> --repo MapCairn/geolint --body-file <path>`. Without triage rights, comment the list of children on the tracker instead.
+Save the current body with `node scripts/agents/issue-body.mjs <tracker> <path>` (in the tool's scratch folder, or in a file named `.tmp-<name>`, which git ignores, so it is never committed; it writes the body byte for byte on every system), add one `- [ ] #<child>` line per child in order, keep all other text unchanged, and save it with `gh issue edit <tracker> --repo MapCairn/geolint --body-file <path>`. Without triage rights, comment the list of children on the tracker instead.
 
 ## 5. Report
 

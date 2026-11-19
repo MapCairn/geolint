@@ -35,7 +35,7 @@ Issues are how geolint tracks work. They are public, so write plain project fact
 
 ## Labels and milestone
 
-Apply the labels that fit from: `bug`, `enhancement`, `documentation`, `performance`, `privacy`, `plan`, `good first issue`, `help wanted`. Check `gh label list --repo MapCairn/geolint` and `gh api repos/MapCairn/geolint/milestones --jq '.[].title'`; give the issue a milestone when one fits (quality, process and test-stability work takes "Maintenance") and leave it unassigned only when none does. Do not invent labels.
+Apply the labels that fit from: `bug`, `enhancement`, `documentation`, `performance`, `privacy`, `plan`, `good first issue`, `help wanted`. Check `gh label list --repo MapCairn/geolint` and `gh api repos/MapCairn/geolint/milestones --jq ".[].title"`; give the issue a milestone when one fits (quality, process and test-stability work takes "Maintenance") and leave it unassigned only when none does. Do not invent labels.
 
 ## File it
 
@@ -50,6 +50,6 @@ On a fork, or without write access to the repository, labels and milestones may 
 ## Afterwards
 
 - `ROADMAP.md` lists milestones, not issues, so an issue is never added to it. Only an outcome a release note could carry becomes a new milestone; say so in the issue, and the maintainer decides whether it joins the list and where.
-- If the issue is a child of a tracking issue, tick or add it in the tracker's task list: start from the current body (`gh issue view <n> --repo MapCairn/geolint --json body --jq .body > <file>`), change only that line, and save it with `gh issue edit <n> --repo MapCairn/geolint --body-file <file>`. Without triage rights, post the child's number as a comment on the tracker.
+- If the issue is a child of a tracking issue, tick or add it in the tracker's task list: save the current body with `node scripts/agents/issue-body.mjs <n> <file>` (in the tool's scratch folder, or in a file named `.tmp-<name>`, which git ignores, so it is never committed; it writes the body byte for byte on every system), change only that line, and save it with `gh issue edit <n> --repo MapCairn/geolint --body-file <file>`. Without triage rights, post the child's number as a comment on the tracker.
 - If the person asked, start the work with the `pick-up-issue` skill.
 - Hand off with the report in `AGENTS.md` ("Definition of done"): the issue URL goes under **PR**, a duplicate found or a label refused under **Deviations**.

@@ -28,9 +28,10 @@
  */
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { readFileSync, realpathSync, statSync } from "node:fs";
+import { readFileSync, statSync } from "node:fs";
 import { basename, extname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { isEntryPoint } from "./entryPoint.mjs";
 
 const REPO = "MapCairn/geolint";
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
@@ -410,7 +411,7 @@ function readRows(request, deps) {
   }
   try {
     return result.stdout
-      .split("\n")
+      .split(/\r?\n/)
       .filter((row) => row.trim() !== "")
       .map((row) => JSON.parse(row));
   } catch {
@@ -540,21 +541,7 @@ function readPipedStdin() {
   return process.stdin.isTTY ? "" : readFileSync(0, "utf8");
 }
 
-/**
- * Whether this file was started directly, comparing real paths so that a
- * symbolic link or junction to it does not make the check run nothing.
- *
- * @returns {boolean}
- */
-function isEntryPoint() {
-  const entry = process.argv[1];
-  return (
-    entry !== undefined &&
-    realpathSync(entry) === realpathSync(fileURLToPath(import.meta.url))
-  );
-}
-
-if (isEntryPoint()) {
+if (isEntryPoint(import.meta.url)) {
   process.exit(
     runCli(process.argv.slice(2), {
       list: FORBIDDEN,

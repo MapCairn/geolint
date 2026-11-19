@@ -8,10 +8,27 @@ import {
   REPO,
   reviewCommentLine,
   reviewThreadsQuery,
+  rows,
   token,
   unresolvedThreadLine,
   // @ts-expect-error The agent scripts are dependency-free JavaScript with JSDoc types.
 } from "../agents/thread.mjs";
+
+describe("rows", () => {
+  it("splits command output at a line feed or a carriage return and line feed, and drops empty rows", () => {
+    expect(rows("alpha\nbeta\r\ngamma\r\n\n")).toEqual([
+      "alpha",
+      "beta",
+      "gamma",
+    ]);
+  });
+
+  it("leaves no carriage return on a login read from Windows output", () => {
+    expect(
+      rows("Octo\r\n").map((login: string) => login.toLowerCase()),
+    ).toEqual(["octo"]);
+  });
+});
 
 describe("REPO", () => {
   it("is this repository", () => {

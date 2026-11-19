@@ -16,7 +16,7 @@
  * write access the list cannot be read, and every login is shown as outside.
  */
 import { spawnSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
+import { isEntryPoint } from "../entryPoint.mjs";
 
 /** The repository the thread is read from. */
 export const REPO = "MapCairn/geolint";
@@ -376,6 +376,18 @@ function itemLine(people, item, prefix = "") {
 }
 
 /**
+ * The non-empty rows of command output. A `gh` on Windows ends a row with a
+ * carriage return and a line feed, so splitting at a line feed alone would leave
+ * a carriage return on the end of a login.
+ *
+ * @param {string} text
+ * @returns {string[]}
+ */
+export function rows(text) {
+  return text.split(/\r?\n/).filter(Boolean);
+}
+
+/**
  * @param {string[]} args
  * @returns {string | null} Standard output, or null when the call failed.
  */
@@ -393,12 +405,7 @@ function gh(args) {
  */
 function listAll(path) {
   const out = gh(["api", path, "--paginate", "--jq", ".[]"]);
-  return out === null
-    ? null
-    : out
-        .split("\n")
-        .filter(Boolean)
-        .map((row) => JSON.parse(row));
+  return out === null ? null : rows(out).map((row) => JSON.parse(row));
 }
 
 /**
@@ -431,12 +438,7 @@ function writeAccessList() {
   ]);
   return out === null
     ? null
-    : new Set(
-        out
-          .split("\n")
-          .filter(Boolean)
-          .map((login) => login.toLowerCase()),
-      );
+    : new Set(rows(out).map((login) => login.toLowerCase()));
 }
 
 /**
@@ -504,7 +506,7 @@ function printPullRequest(number, people) {
     );
     return;
   }
-  for (const text of threads.split("\n").filter(Boolean)) {
+  for (const text of rows(threads)) {
     const thread = JSON.parse(text);
     for (const comment of thread.comments?.nodes ?? []) {
       console.log(unresolvedThreadLine(people, thread.path, comment));
@@ -512,7 +514,7 @@ function printPullRequest(number, people) {
   }
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   const [kind, raw] = process.argv.slice(2);
   const number = Number(raw);
   if (
