@@ -151,9 +151,11 @@ describe("findForbidden", () => {
   });
 
   it("stays fast on a very long token", () => {
-    const started = Date.now();
+    // CPU time, not the clock, so a busy machine does not fail the test.
+    const started = process.cpuUsage();
     expect(findForbidden("a".repeat(200_000), LIST)).toEqual([]);
-    expect(Date.now() - started).toBeLessThan(5000);
+    const used = process.cpuUsage(started);
+    expect((used.user + used.system) / 1000).toBeLessThan(5000);
   });
 });
 
