@@ -28,6 +28,10 @@ const MIN_MAGNITUDE = 1e-100;
 const TEST_TIMEOUT_MS = 60_000;
 
 const COMB_LENGTH = 50;
+/** Petals of the flower in the hub tests: 16,000 edges meet at its centre. */
+const HUB_PETALS = 8000;
+/** A pairwise pass over 16,000 edges at one point takes over a minute; the linear one takes a fraction of a second. */
+const HUB_BUDGET_MS = 10_000;
 
 vi.setConfig({ testTimeout: TEST_TIMEOUT_MS });
 
@@ -260,6 +264,30 @@ const integerSegments = fc.array(
   { maxLength: 14 },
 );
 
+/**
+ * Segments that gather at the origin: starting there, ending there, running
+ * through it (possibly on one line and overlapping), or anywhere else.
+ */
+const hubDirection = fc
+  .tuple(integerCoordinate, integerCoordinate)
+  .filter(([x, y]) => x !== 0 || y !== 0);
+const hubSegment = fc.oneof(
+  hubDirection.map(([x, y]) => seg(0, 0, x, y)),
+  hubDirection.map(([x, y]) => seg(x, y, 0, 0)),
+  fc
+    .tuple(hubDirection, fc.integer({ min: 1, max: 3 }))
+    .map(([[x, y], k]) => seg(x, y, -k * x, -k * y)),
+  fc
+    .tuple(
+      integerCoordinate,
+      integerCoordinate,
+      integerCoordinate,
+      integerCoordinate,
+    )
+    .map(([ax, ay, bx, by]) => seg(ax, ay, bx, by)),
+);
+const hubSegments = fc.array(hubSegment, { minLength: 2, maxLength: 12 });
+
 const awkwardCoordinate = fc.constantFrom(
   0,
   0.1,
@@ -400,6 +428,59 @@ describe("findSegmentIntersections against a brute-force oracle", () => {
         expectSameContacts(toMap(result.intersections), wanted, false);
       }),
       { numRuns: NUMBER_OF_RUNS },
+    );
+  });
+
+  it("reports only the crossings when asked, as the oracle's crossings", () => {
+    fc.assert(
+      fc.property(hubSegments, (segments) => {
+        const expected = new Map(
+          [...bruteForce(segments, integerOrient)].filter(
+            ([, contact]) => contact.kind === "cross",
+          ),
+        );
+        const result = findSegmentIntersections(segments, { only: "cross" });
+        expect(result.stopped).toBe(false);
+        expectSameContacts(toMap(result.intersections), expected, false);
+      }),
+      { numRuns: NUMBER_OF_RUNS * 5 },
+    );
+  });
+
+  it("reports only the crossings the caller does not ignore, and counts only those towards the limit", () => {
+    fc.assert(
+      fc.property(
+        hubSegments,
+        fc.integer({ min: 1, max: 4 }),
+        (segments, limit) => {
+          const kept = (first: number, second: number): boolean =>
+            (first + second) % 3 !== 0;
+          const expected = new Map(
+            [...bruteForce(segments, integerOrient)].filter(
+              ([key, contact]) => {
+                const [first, second] = key.split("-").map(Number) as [
+                  number,
+                  number,
+                ];
+                return contact.kind === "cross" && kept(first, second);
+              },
+            ),
+          );
+          const result = findSegmentIntersections(segments, {
+            only: "cross",
+            limit,
+            ignore: (first, second) => !kept(first, second),
+          });
+          expect(result.intersections).toHaveLength(
+            Math.min(limit, expected.size),
+          );
+          expect(result.stopped).toBe(expected.size >= limit);
+          for (const found of result.intersections) {
+            expect(expected.has(pairKey(found.first, found.second))).toBe(true);
+          }
+        },
+      ),
+      { numRuns: NUMBER_OF_RUNS * 3 },
     );
   });
 
@@ -761,6 +842,30 @@ describe("findRingIntersections", () => {
     );
   });
 
+  it("agrees with an oracle on rings whose edges gather at one point", () => {
+    const hubRing = fc
+      .array(
+        fc.oneof(
+          fc.constant<Position>([0, 0]),
+          fc.tuple(integerCoordinate, integerCoordinate),
+        ),
+        { minLength: 3, maxLength: 12 },
+      )
+      .map((positions): Position[] => [...positions, positions[0] as Position]);
+    fc.assert(
+      fc.property(hubRing, (ring) => {
+        const crossings = new Map(
+          [...ringOracle(ring)].filter(
+            ([, contact]) => contact.kind === "cross",
+          ),
+        );
+        const result = findRingIntersections(ring, { only: "cross" });
+        expectSameContacts(toMap(result.intersections), crossings, false);
+      }),
+      { numRuns: NUMBER_OF_RUNS * 5 },
+    );
+  });
+
   it("stops at the limit", () => {
     const star: Position[] = [];
     for (let i = 0; i < 9; i++) {
@@ -867,6 +972,44 @@ describe("scaling", () => {
     );
     return ring;
   }
+
+  /**
+   * A ring of thin triangular petals that all share the centre, so that two
+   * edges of every petal end there and no petal touches another elsewhere.
+   */
+  function flower(petals: number): Position[] {
+    const half = Math.PI / (4 * petals);
+    const ring: Position[] = [];
+    for (let i = 0; i < petals; i++) {
+      const centre = (2 * Math.PI * i) / petals;
+      ring.push(
+        [0, 0],
+        [1000 * Math.cos(centre - half), 1000 * Math.sin(centre - half)],
+        [1000 * Math.cos(centre + half), 1000 * Math.sin(centre + half)],
+      );
+    }
+    ring.push([0, 0]);
+    return ring;
+  }
+
+  it("finds no crossing in a flower of 8,000 petals, whose 16,000 edges meet at one point, quickly", () => {
+    const ring = flower(HUB_PETALS);
+    const started = cpuMilliseconds();
+    const result = findRingIntersections(ring, { only: "cross" });
+    const elapsed = cpuMilliseconds() - started;
+    expect(result).toEqual({ intersections: [], stopped: false });
+    expect(elapsed).toBeLessThan(HUB_BUDGET_MS);
+  });
+
+  it("finds the crossing in that flower when a petal is bent across another", () => {
+    const bent = flower(HUB_PETALS);
+    bent[1] = bent[31] as Position;
+    const result = findRingIntersections(bent, { only: "cross", limit: 3 });
+    expect(result.intersections.length).toBeGreaterThan(0);
+    expect(result.intersections.every(({ kind }) => kind === "cross")).toBe(
+      true,
+    );
+  });
 
   it("finds nothing in a simple 200,000-vertex circle, quickly", () => {
     const ring = circle(SCALE_VERTICES);

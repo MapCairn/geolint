@@ -217,8 +217,8 @@ function crossingFindings(rings: readonly RingRef[]): Finding[] {
   });
   const result = findSegmentIntersections(segments, {
     limit: MAX_REPORTED + 1,
-    ignore: (first, second, kind) =>
-      kind !== "cross" ||
+    only: "cross",
+    ignore: (first, second) =>
       (owners[first] as EdgeOwner).ring === (owners[second] as EdgeOwner).ring,
   });
   const spots = result.intersections.map((found): Spot => {
