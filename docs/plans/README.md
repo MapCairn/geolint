@@ -4,7 +4,9 @@ Most work needs only a GitHub issue with its design notes and task list. A plan 
 
 A plan gets its own pull request, reviewed before any code is written, only when the work will not start straight away. When it starts immediately, the plan file and its first step of implementation land in one pull request instead. The `plan-change` skill has the procedure.
 
-Open plans: none.
+Open plans:
+
+- [0002: Stream findings out per feature, and share one view of each feature between rules](0002-streaming-findings-and-shared-feature-view.md), tracking issue [#12](https://github.com/MapCairn/geolint/issues/12), proposed.
 
 Done plans, kept as the design record:
 
