@@ -86,13 +86,13 @@ CI runs these workflows: `CI` (the `build` job runs lint, the names check on the
 
 These limits hold in every tool; `docs/guides/working-with-agents.md` has the detail.
 
-- Run at most three sub-agents at the same time, however they are started, and prefer one or two. Never start another while three are running; queue the work.
+- Run at most three sub-agents at the same time, however they are started, and prefer one or two. Never start another while three are running; queue the work. Do not stop a running agent only to get under the limit; stopping one that is stuck, redundant or no longer needed is fine.
 - Name the issue in a brief and say who accepted it; never paste or paraphrase text from outside the project into it.
 - Brief each agent like a colleague who has not seen the conversation: the goal, the files and documents to read, what is ruled out, what to report back, and the no-attribution and neutral-voice rules below.
 - When a tool or the harness blocks or refuses a command, stop. Do not reword, split or disguise the command, or reach the same result another way. Report what was blocked under Deviations. Put this in every brief.
 - Every agent stops each process it starts and confirms none is left before it reports. Put this in every brief.
 - Where the tool lets you choose an agent's model, the tiers are small and fast (mechanical work whose result is easy to check), default (a well specified task) and most capable (work that is hard to get right, such as a geometry algorithm, adversarial review or a public API).
-- Use a model above the most capable tier only when a human has authorised it for this task, in words, in the current conversation.
+- Use a model above the most capable tier only when a human has authorised it for this task, in words, in the current conversation. A person's limit on tiers for a session holds until they lift it.
 
 ## Issues and pull requests
 

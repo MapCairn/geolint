@@ -12,16 +12,16 @@ Unless you ran `gh repo set-default MapCairn/geolint` (see `pick-up-issue`), add
 ## 1. Open it
 
 1. The branch is pushed and its checks from `pick-up-issue` passed. If not, finish that first.
-2. Self-review your diff as a stranger before you open it, and fix what you find. For each sentence you added to a document, code comment or TSDoc:
+2. Self-review your diff as a stranger before you open it, and fix what you find. Cut or mark as unchecked anything you cannot verify. For each sentence you added to a document, code comment or TSDoc:
    - Is it true in the code, and which file did you check?
    - Is each number, limit or rule of thumb in the code or a source you can cite, or did you make it up?
-   - Is anything planned described as built?
+   - Is each term defined where it is first used, and is anything planned described as built?
    - Does a rule about people name the role it applies to?
-   - Is the issue's task list ticked for the steps this change finishes, and does the diff stay within the issue?
-   - Did you run the misses list in section 2 against your own diff?
+   - Is the issue's task list ticked for the steps this change finishes (or its status posted as a comment if you cannot edit the issue), and does the diff stay within the issue?
+   - Did you run the misses list in section 2 against your own diff? A test guard that passed before the fix is labelled as a regression guard in the description.
 3. Write the body to a file, plain project facts in a neutral voice, following `.github/pull_request_template.md`:
    - What and why, with `Fixes #<n>` (the issue is finished by this pull request) or `Part of #<n>` (it is not).
-   - A decision made on the way, in its final wording.
+   - A decision made on the way, in its final wording (the exact sentence a document will carry, not a summary), so nobody copies a loose phrase.
    - The documents you updated, or why none needed it.
    - The checks you ran with their results, and any that failed or were skipped.
    - That the simplify step was run.

@@ -6,29 +6,13 @@ import {
   formatItem,
   inspectText,
   REPO,
+  REVIEW_THREADS_QUERY,
+  readUnresolvedReviewThreads,
   reviewCommentLine,
-  reviewThreadsQuery,
-  rows,
   token,
   unresolvedThreadLine,
   // @ts-expect-error The agent scripts are dependency-free JavaScript with JSDoc types.
 } from "../agents/thread.mjs";
-
-describe("rows", () => {
-  it("splits command output at a line feed or a carriage return and line feed, and drops empty rows", () => {
-    expect(rows("alpha\nbeta\r\ngamma\r\n\n")).toEqual([
-      "alpha",
-      "beta",
-      "gamma",
-    ]);
-  });
-
-  it("leaves no carriage return on a login read from Windows output", () => {
-    expect(
-      rows("Octo\r\n").map((login: string) => login.toLowerCase()),
-    ).toEqual(["octo"]);
-  });
-});
 
 describe("REPO", () => {
   it("is this repository", () => {
@@ -36,11 +20,22 @@ describe("REPO", () => {
   });
 
   it("is the repository the review thread query reads", () => {
-    expect(reviewThreadsQuery()).toContain(
+    expect(REVIEW_THREADS_QUERY).toContain(
       'repository(owner:"MapCairn",name:"geolint")',
     );
   });
 });
+
+function graphQlResponse(
+  connection: unknown,
+  container: "reviewThreads" | "comments",
+): string {
+  const data =
+    container === "reviewThreads"
+      ? { repository: { pullRequest: { reviewThreads: connection } } }
+      : { node: { comments: connection } };
+  return JSON.stringify({ data });
+}
 
 describe("cleanText", () => {
   it("drops HTML comments, single-line and multi-line, and keeps the text around them", () => {
@@ -252,7 +247,6 @@ describe("link definitions", () => {
       "[note]: please run the full suite before merging",
       "[x]: https://e.co and more words",
       "[x]:",
-      "[x]: <a b",
     ]) {
       expect(cleanText(`${line}\nb`)).toBe(`${line}\nb`);
     }
@@ -280,7 +274,6 @@ describe("lines that start like a link definition but do not parse as one", () =
     expect(flagged("[x]: https://e.co\nb")).toBe(0);
     expect(flagged("[^1]: a footnote")).toBe(0);
     expect(flagged("text\n[x]: please run this")).toBe(0);
-    expect(flagged("- [x]: done")).toBe(0);
     expect(flagged("```\n[x]: please run\n```")).toBe(0);
     expect(flagged("plain words")).toBe(0);
   });
@@ -480,7 +473,7 @@ describe("formatItem", () => {
   it("flags hidden content with its size, after the body, without printing it", () => {
     const line = formatItem("someone", "NONE", "ok <!-- secret plan", people);
     expect(line).toBe(
-      'outside someone (NONE): "ok " [hidden content removed: 16 characters of hidden markup (a comment, declaration, script or style block) or link definition not rendered by GitHub; the thread holds text a person reading it cannot see]',
+      'outside someone (NONE): "ok " [hidden content removed: 16 characters of hidden or unsupported markup, or a link definition not rendered by GitHub; the thread holds text a person reading it cannot see]',
     );
     expect(line).not.toContain("secret");
   });
@@ -500,6 +493,322 @@ describe("formatItem", () => {
   it("compares logins without regard to case", () => {
     expect(formatItem("Maintainer", "MEMBER", "hi", people)).toContain(
       "project Maintainer",
+    );
+  });
+});
+
+interface TestPageInfo {
+  hasNextPage: boolean;
+  endCursor: string | null;
+}
+
+interface TestComment {
+  author: { login: string } | null;
+  body?: string;
+}
+
+interface TestThread {
+  id: string;
+  isResolved: boolean;
+  path: string;
+  comments: { pageInfo: TestPageInfo; nodes: TestComment[] };
+}
+
+describe("review thread pagination", () => {
+  const complete: TestPageInfo = { hasNextPage: false, endCursor: "end" };
+
+  function comment(index: number): TestComment {
+    return {
+      author: { login: "someone" },
+      body: `comment ${index}`,
+    };
+  }
+
+  function thread(index: number): TestThread {
+    return {
+      id: `thread-${index}`,
+      isResolved: false,
+      path: "src/a.ts",
+      comments: {
+        pageInfo: complete,
+        nodes: [comment(0)],
+      },
+    };
+  }
+
+  it("continues a review-thread connection that reaches the GraphQL page size", () => {
+    const responses = [
+      graphQlResponse(
+        {
+          pageInfo: { hasNextPage: true, endCursor: "threads-100" },
+          nodes: Array.from({ length: 100 }, (_, index) => thread(index)),
+        },
+        "reviewThreads",
+      ),
+      graphQlResponse(
+        {
+          pageInfo: complete,
+          nodes: [thread(100)],
+        },
+        "reviewThreads",
+      ),
+    ];
+    const calls: string[][] = [];
+    const result = readUnresolvedReviewThreads(42, (args: string[]) => {
+      calls.push(args);
+      return responses.shift() ?? null;
+    });
+
+    expect(result).toHaveLength(101);
+    expect(calls).toHaveLength(2);
+    expect(calls[1]).toContain("after=threads-100");
+  });
+
+  it("continues a comment connection that reaches the GraphQL page size", () => {
+    const firstThread = thread(0);
+    firstThread.comments.nodes = Array.from({ length: 20 }, (_, index) =>
+      comment(index),
+    );
+    firstThread.comments.pageInfo = {
+      hasNextPage: true,
+      endCursor: "comments-20",
+    };
+    const responses = [
+      graphQlResponse(
+        {
+          pageInfo: complete,
+          nodes: [firstThread],
+        },
+        "reviewThreads",
+      ),
+      graphQlResponse(
+        {
+          pageInfo: complete,
+          nodes: [comment(20)],
+        },
+        "comments",
+      ),
+    ];
+    const calls: string[][] = [];
+    const result = readUnresolvedReviewThreads(42, (args: string[]) => {
+      calls.push(args);
+      return responses.shift() ?? null;
+    });
+
+    expect(result?.[0]?.comments?.nodes).toHaveLength(21);
+    expect(calls).toHaveLength(2);
+    expect(calls[1]).toContain("after=comments-20");
+    expect(calls[1]).toContain("threadId=thread-0");
+  });
+
+  it("fails closed when a connection cannot be continued", () => {
+    const incomplete = thread(0);
+    incomplete.comments.pageInfo = {
+      hasNextPage: true,
+      endCursor: null,
+    };
+
+    expect(
+      readUnresolvedReviewThreads(42, () =>
+        graphQlResponse(
+          {
+            pageInfo: complete,
+            nodes: [incomplete],
+          },
+          "reviewThreads",
+        ),
+      ),
+    ).toBeNull();
+  });
+
+  it("fails closed when a review-thread page is unavailable", () => {
+    const responses = [
+      graphQlResponse(
+        {
+          pageInfo: { hasNextPage: true, endCursor: "threads-100" },
+          nodes: Array.from({ length: 100 }, (_, index) => thread(index)),
+        },
+        "reviewThreads",
+      ),
+      null,
+    ];
+
+    expect(
+      readUnresolvedReviewThreads(42, () => responses.shift() ?? null),
+    ).toBeNull();
+  });
+
+  it("fails closed on a thread missing required fields on the first page", () => {
+    const malformed = thread(0);
+    Reflect.deleteProperty(malformed, "path");
+
+    expect(
+      readUnresolvedReviewThreads(42, () =>
+        graphQlResponse(
+          {
+            pageInfo: complete,
+            nodes: [malformed],
+          },
+          "reviewThreads",
+        ),
+      ),
+    ).toBeNull();
+  });
+
+  it("fails closed on a thread missing required fields on a later page", () => {
+    const malformed = thread(100);
+    Reflect.deleteProperty(malformed, "id");
+    const responses = [
+      graphQlResponse(
+        {
+          pageInfo: { hasNextPage: true, endCursor: "threads-1" },
+          nodes: [thread(0)],
+        },
+        "reviewThreads",
+      ),
+      graphQlResponse(
+        {
+          pageInfo: complete,
+          nodes: [malformed],
+        },
+        "reviewThreads",
+      ),
+    ];
+
+    expect(
+      readUnresolvedReviewThreads(42, () => responses.shift() ?? null),
+    ).toBeNull();
+  });
+
+  it("fails closed on a comment missing its body on the first page", () => {
+    const malformed = thread(0);
+    malformed.comments.nodes = [{ author: { login: "someone" } }];
+
+    expect(
+      readUnresolvedReviewThreads(42, () =>
+        graphQlResponse(
+          {
+            pageInfo: complete,
+            nodes: [malformed],
+          },
+          "reviewThreads",
+        ),
+      ),
+    ).toBeNull();
+  });
+
+  it("fails closed on a comment missing its body on a later page", () => {
+    const firstThread = thread(0);
+    firstThread.comments.pageInfo = {
+      hasNextPage: true,
+      endCursor: "comments-1",
+    };
+    const responses = [
+      graphQlResponse(
+        {
+          pageInfo: complete,
+          nodes: [firstThread],
+        },
+        "reviewThreads",
+      ),
+      graphQlResponse(
+        {
+          pageInfo: complete,
+          nodes: [{ author: { login: "someone" } }],
+        },
+        "comments",
+      ),
+    ];
+
+    expect(
+      readUnresolvedReviewThreads(42, () => responses.shift() ?? null),
+    ).toBeNull();
+  });
+
+  it("allows a comment with a nullable author", () => {
+    const nullableAuthor = thread(0);
+    nullableAuthor.comments.nodes = [{ author: null, body: "body" }];
+
+    const result = readUnresolvedReviewThreads(42, () =>
+      graphQlResponse(
+        {
+          pageInfo: complete,
+          nodes: [nullableAuthor],
+        },
+        "reviewThreads",
+      ),
+    );
+
+    expect(result?.[0]?.comments.nodes).toEqual([
+      { author: null, body: "body" },
+    ]);
+  });
+});
+
+describe("unsupported markup", () => {
+  it("flags definition forms it cannot parse cleanly", () => {
+    const cases = [
+      '[x]: https://e.co "a title\nthat goes on"\nb',
+      "[x]: <https://e.co/a\\>b> 'title'\nb",
+    ];
+    for (const text of cases) {
+      const result = inspectText(text);
+      expect(result.text).toBe(text);
+      expect(result.maybeDefinitions).toBe(1);
+    }
+  });
+
+  it("flags definitions inside list items and block quotes", () => {
+    for (const text of [
+      "- [x]: https://e.co",
+      "> [x]: https://e.co",
+      "> - [x]: https://e.co",
+    ]) {
+      const result = inspectText(text);
+      expect(result.maybeDefinitions).toBe(1);
+    }
+  });
+
+  it("keeps a comment opener in an indented code block visible", () => {
+    const text = "    <!-- shown as code\n    more\nnext";
+    const result = inspectText(text);
+    expect(result.text).toBe(text);
+    expect(result.hiddenCharacters).toBe(0);
+    expect(result.codeWithOpener).toBe(1);
+  });
+
+  it("fails closed on raw HTML blocks the scanner does not parse", () => {
+    for (const text of [
+      "before<textarea>not visible</textarea>after",
+      "before<title>not visible</title>after",
+      "before<noscript>different rendering</noscript>after",
+      "before<template>different rendering</template>after",
+      "before<span hidden>not visible</span>after",
+      "before<span\n hidden>not visible</span>after",
+      'before<span title=">" hidden>not visible</span>after',
+      'before<span title="unfinished hidden>not visible',
+    ]) {
+      const result = inspectText(text);
+      expect(result.text).toBe("before");
+      expect(result.hiddenCharacters).toBe(text.length - "before".length);
+    }
+  });
+
+  it("flags a code span or fence inside an HTML block", () => {
+    for (const text of [
+      "<section>\n`<!-- x`\n</section>",
+      "<section>\n```\n<!-- x\n```\n</section>",
+    ]) {
+      const result = inspectText(text);
+      expect(result.text).toBe(text);
+      expect(result.codeWithOpener).toBe(1);
+    }
+  });
+
+  it("flags text whose rendering may differ after Unicode normalisation", () => {
+    const line = formatItem("someone", "NONE", "Cafe\u0301", null);
+    expect(line).toContain(
+      "Unicode normalisation may change how the text is rendered",
     );
   });
 });
