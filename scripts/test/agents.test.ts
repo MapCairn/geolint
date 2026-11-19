@@ -39,6 +39,7 @@ import {
   parseFrontmatter,
   // @ts-expect-error The agent scripts are dependency-free JavaScript with JSDoc types.
 } from "../agents/skills.mjs";
+import { canCreateSymlinks } from "./symlinks.js";
 
 const skill = (fields: string, body = "Body.\n"): string =>
   `---\n${fields}\n---\n\n${body}`;
@@ -576,7 +577,7 @@ describe("skill problems", () => {
   });
 });
 
-describe("symbolic links in the sources", () => {
+describe.skipIf(!canCreateSymlinks)("symbolic links in the sources", () => {
   let root: string;
   let outside: string;
 
@@ -719,12 +720,27 @@ describe("symbolic links in the sources", () => {
     );
     symlinkSync(
       path.join(outside, "secret.txt"),
-      path.join(root, ".claude/skills/alpha/x\ny: forged"),
+      path.join(root, ".claude/skills/alpha/x\u202ey-forged"),
     );
     const message = skillProblems(root).join("\n");
     expect(message.split("\n")).toHaveLength(1);
-    expect(message).toContain("x\\u000ay: forged");
+    expect(message).toContain("x\\u202ey-forged");
   });
+
+  // Windows cannot create a file name with a newline in it, so the check that
+  // a newline in a reported path cannot add a line runs where it can.
+  it.skipIf(process.platform === "win32")(
+    "escapes a newline in a reported path",
+    () => {
+      symlinkSync(
+        path.join(outside, "secret.txt"),
+        path.join(root, ".claude/skills/alpha/x\ny: forged"),
+      );
+      const message = skillProblems(root).join("\n");
+      expect(message.split("\n")).toHaveLength(1);
+      expect(message).toContain("x\\u000ay: forged");
+    },
+  );
 
   it("still plans an ordinary tree", () => {
     expect([...plannedFiles(root).keys()]).toContain(
