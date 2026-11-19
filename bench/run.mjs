@@ -11,7 +11,8 @@
  *
  * Targets (set before profiling, see the README): a FeatureCollection lints at
  * 15 MB/s or better on one thread and keeps peak memory under 400 MB whatever
- * its size; a polygon of 1,000,000 vertices lints in under 10 s.
+ * its size; a polygon of 1,000,000 vertices lints in under 10 s. Each case runs
+ * with a capped young generation (see `YOUNG_GENERATION_FLAG`).
  */
 import { spawnSync } from "node:child_process";
 import { mkdtempSync, rmSync, statSync } from "node:fs";
@@ -20,6 +21,12 @@ import path from "node:path";
 import { writeCollection, writePolygon } from "./generate.mjs";
 
 const MEGABYTE = 1024 * 1024;
+/**
+ * Peak resident memory is dominated by V8's young generation, whose limit follows
+ * the machine's memory and not the input. Capping it makes the figure about the
+ * linter. It has to be a start-up flag; see the README's "Performance".
+ */
+const YOUNG_GENERATION_FLAG = "--max-semi-space-size=16";
 const POLYGON_VERTICES = 1_000_000;
 const skipLarge = process.argv.includes("--skip-large");
 
@@ -49,7 +56,7 @@ const cases = [
 function lintInFreshProcess(file) {
   const result = spawnSync(
     process.execPath,
-    [path.join(import.meta.dirname, "case.mjs"), file],
+    [YOUNG_GENERATION_FLAG, path.join(import.meta.dirname, "case.mjs"), file],
     {
       encoding: "utf8",
       maxBuffer: 16 * MEGABYTE,
