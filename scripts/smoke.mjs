@@ -29,6 +29,7 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { withoutAllowScripts } from "./smokeEnvironment.mjs";
 
 const PACKAGE = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -115,7 +116,7 @@ try {
     run(
       NPM,
       ["install", tarball, "--ignore-scripts", "--no-audit", "--no-fund"],
-      { cwd: project },
+      { cwd: project, env: withoutAllowScripts(process.env) },
     ),
     "npm install of the tarball",
   );

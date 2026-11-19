@@ -55,7 +55,7 @@ jobs:
           retention-days: 14
       - run: npm run build
 
-  # The same lint, tests and build on the other two systems people use, so a
+  # The same lint, tests, build and smoke test on the other two systems people use, so a
   # change that only works on Linux fails here. Not required by the ruleset;
   # `build` stays the required check. `--ignore-scripts` skips installing the git
   # hooks, which a runner has no use for.
@@ -80,6 +80,7 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+      - run: npm run smoke
 
   # Its own job, so a registry outage or a package that publishes without a
   # signature cannot fail the required `build` check. Nothing depends on it.
