@@ -236,12 +236,16 @@ const FINISHED: IteratorReturnResult<undefined> = {
 
 /**
  * The features of one document, read on demand: one asynchronous step per
- * chunk of input, and a synchronous queue for the features that chunk held.
- * It ends at the first problem, after the features read before it.
+ * chunk of input, and then one feature parsed for each request. Parsing a
+ * feature only when it is asked for keeps the parsed copies of a whole chunk
+ * from being alive at once, which is what made the garbage collector promote
+ * them and the heap grow. It ends at the first problem, after the features
+ * read before it.
  */
 class FeatureStream implements AsyncIterator<SourceFeature, undefined> {
-  private queue: SourceFeature[] = [];
+  private events: readonly SplitEvent[] = [];
   private position = 0;
+  private root: SourceFeature | undefined;
   private finished = false;
 
   constructor(
@@ -255,54 +259,80 @@ class FeatureStream implements AsyncIterator<SourceFeature, undefined> {
   ) {}
 
   async next(): Promise<IteratorResult<SourceFeature, undefined>> {
-    while (this.position >= this.queue.length) {
+    for (;;) {
+      const feature = await this.nextFeature();
+      if (feature !== undefined) {
+        return { done: false, value: feature };
+      }
       if (this.finished) {
         this.settle();
         return FINISHED;
       }
-      await this.refill();
     }
-    const feature = this.queue[this.position] as SourceFeature;
-    this.position += 1;
-    return { done: false, value: feature };
   }
 
   /** Stops early: releases the input and settles `done`. */
   async return(): Promise<IteratorResult<SourceFeature, undefined>> {
     this.finished = true;
-    this.queue = [];
+    this.events = [];
+    this.root = undefined;
     await this.batches.return(undefined);
     this.settle();
     return FINISHED;
   }
 
-  private async refill(): Promise<void> {
-    const batch = await this.batches.next();
-    this.queue = [];
-    this.position = 0;
-    if (batch.done) {
-      this.finished = true;
-      this.queueRoot();
-      return;
-    }
-    for (const event of batch.value) {
-      const feature = this.session.accept(event);
-      if (this.session.error !== undefined) {
-        this.finished = true;
-        await this.batches.return(undefined);
-        return;
+  /**
+   * The next feature, or undefined when the events in hand are used up and
+   * `finished` says whether there is more input to ask for.
+   */
+  private async nextFeature(): Promise<SourceFeature | undefined> {
+    while (this.position >= this.events.length) {
+      if (this.root !== undefined) {
+        const root = this.root;
+        this.root = undefined;
+        return root;
       }
-      if (feature !== undefined) {
-        this.queue.push(feature);
+      if (this.finished) {
+        return undefined;
       }
+      await this.refill();
     }
+    return this.acceptNext();
   }
 
-  private queueRoot(): void {
-    const root = this.session.rootFeature();
-    if (root !== undefined) {
-      this.queue.push(root);
+  /** Takes events until one completes a feature, the batch ends or the input fails. */
+  private async acceptNext(): Promise<SourceFeature | undefined> {
+    while (this.position < this.events.length) {
+      const event = this.events[this.position] as SplitEvent;
+      this.position += 1;
+      const feature = this.session.accept(event);
+      if (this.session.error !== undefined) {
+        await this.stop();
+        return undefined;
+      }
+      if (feature !== undefined) {
+        return feature;
+      }
     }
+    return undefined;
+  }
+
+  private async refill(): Promise<void> {
+    const batch = await this.batches.next();
+    this.position = 0;
+    if (batch.done) {
+      this.events = [];
+      this.finished = true;
+      this.root = this.session.rootFeature();
+      return;
+    }
+    this.events = batch.value;
+  }
+
+  private async stop(): Promise<void> {
+    this.finished = true;
+    this.events = [];
+    await this.batches.return(undefined);
   }
 }
 
