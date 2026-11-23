@@ -56,7 +56,7 @@ Several issues at once, or an agent beside you, means a separate worktree for ea
 
 ## 5. Checks
 
-- Any code: `npm run lint`, `npm run typecheck`, `npm run test:coverage`, `npm run build`. A change to the packed files, the manifest or the command adds `npm run smoke`. A change to a rule's speed adds `npm run bench:rules`, run on a quiet machine, with the before and after figures in the pull request.
+- Any code: `npm run lint`, `npm run typecheck`, `npm run test:coverage`, `npm run build`. A change to the packed files, the manifest or the command adds `npm run smoke` and `npm run pack:lint`. A change to a rule's speed adds `npm run bench:rules`, run on a quiet machine, with the before and after figures in the pull request.
 - Documents only (Markdown, skills and agent files, templates; no code, workflow, package or config change): `npm run lint` (run `npm run agents:sync` first when a skill or agent changed) and the read-through in section 6. Say "not run: documents only" for the rest under Checks. CI still runs every check.
 - Dependencies: the real install and `npm ci --ignore-scripts` check in `AGENTS.md`.
 
