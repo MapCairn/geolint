@@ -45,7 +45,7 @@ A new rule is one file in `src/engine/rules`, one line in the registry, a passin
 - Document exported APIs with JSDoc. Add code comments only for non-obvious constraints or invariants.
 - Use expanded, braced `if` statements.
 - Use British English in messages and docs. Keep prose plain and specific. Use an em dash only where it reads naturally, not as a habit.
-- Use Conventional Commits for commit messages.
+- Use Conventional Commits for commit messages. CI fails a pull request whose title is not one (`scripts/prTitleCheck.mjs`), because the title becomes the squash-merge subject.
 
 ## Code style
 
