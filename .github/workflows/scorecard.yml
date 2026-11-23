@@ -10,6 +10,9 @@ on:
 # granted here. The action's README forbids write permissions at this level.
 permissions: {}
 
+# The job can mint an OIDC token and caches nothing, so it gets no cache access.
+cache-mode: none
+
 concurrency:
   group: scorecard-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true

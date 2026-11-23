@@ -60,7 +60,7 @@ The coding standard is what the tools enforce, not a separate guide.
 
 geolint keeps its production dependencies few and permissive (MIT, BSD, ISC, Apache-2.0, Unlicense, CC0, 0BSD). `npm run lint` fails if the installed production tree holds any other licence. A new runtime dependency is the maintainer's decision: propose it in an issue, with why it is needed and its licence. Do not edit `src/testing/licences.ts` to get a change through.
 
-After changing a manifest, run a real `npm install` and include the lockfile. Do not use `--package-lock-only` as the normal update procedure. Pin versions exactly, and never install a version published less than 7 days ago (`.npmrc` sets `min-release-age=7`). Prove a lockfile change with one real `npm ci --ignore-scripts` under npm 11 in a disposable clone. See [`AGENTS.md`](AGENTS.md) for more.
+After changing a manifest, run a real `npm install` and include the lockfile. Do not use `--package-lock-only` as the normal update procedure. Write third-party ranges as caret ranges (`^1.2.3`), pin a prerelease exactly, and never install a version published less than 3 days ago (`.npmrc` sets `min-release-age=3`). Prove a lockfile change with one real `npm ci --ignore-scripts` under npm 11 in a disposable clone. See [`AGENTS.md`](AGENTS.md) for more.
 
 ## Pull requests
 
