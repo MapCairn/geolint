@@ -69,9 +69,10 @@ CI runs these workflows: `CI` (the `build` job runs lint, the names check on the
 
 ### Dependencies and lockfiles
 
-- After a manifest change, run a real `npm install` and include the manifest and lockfile together. Do not use `--package-lock-only` as the normal update procedure. Check the result with one real `npm ci --ignore-scripts` under npm 11 in a disposable clone. Never hand-edit dependency versions. Pin versions exactly.
+- After a manifest change, run a real `npm install` and include the manifest and lockfile together. Do not use `--package-lock-only` as the normal update procedure. Check the result with one real `npm ci --ignore-scripts` under npm 11 in a disposable clone. Never hand-edit dependency versions.
+- Write third-party ranges as caret ranges (`^1.2.3`) in the manifest and pin a prerelease exactly. The committed lockfile and `npm ci` keep installs reproducible; Dependabot raises the lower bound (`versioning-strategy: increase`). `scripts/test/dependencyRanges.test.ts` checks it.
 - A production dependency must be permissive (the list in `src/testing/licences.ts`), justified in the README's "Dependencies" table and credited in `ATTRIBUTIONS.md`. `npm run licence:deps` fails on any other licence in the installed production tree.
-- Never install or upgrade to a package version published less than 7 days ago. `.npmrc` sets `min-release-age=7` and Dependabot has a 7-day cooldown; do not work around either. A fix that exists only in a newer release goes to the maintainer first.
+- Never install or upgrade to a package version published less than 3 days ago. `.npmrc` sets `min-release-age=3` and Dependabot has a 3-day cooldown; do not work around either. A fix that exists only in a newer release goes to the maintainer first.
 - Dependabot owns its own lockfile changes. Do not install into a working tree another person or agent is using. Run tools through `npm run` or `npx --no-install`.
 
 ## Boundaries of the code
