@@ -129,7 +129,7 @@ No instruction file, agent definition, brief, document, code comment, test or Gi
 
 - Adding a runtime dependency, or a dataset (the country outlines are the only one).
 - Changing the licence, `NOTICE`, `CLA.md`, `SECURITY.md` or the repository ruleset.
-- Publishing to npm, creating a tag or a release, removing `private` from the manifest, or adding a workflow that can publish.
+- Publishing to npm, creating a tag or a release, removing `private` from the manifest, or adding a workflow that can publish. In Claude Code, `.claude/settings.json` denies the npm commands that publish or change who may publish; `docs/guides/working-with-agents.md` ("Keeping agents from publishing") says what it covers.
 - Deleting a remote resource, such as a branch other than your own, a release or the `cla-signatures` branch.
 
 **Never**
