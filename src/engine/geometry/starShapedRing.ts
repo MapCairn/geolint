@@ -48,7 +48,9 @@ function centreOf(
  * each edge covers an angular range of its own and consecutive edges share only
  * their common vertex, so no two edges meet anywhere else. The point tried is
  * the mean of the vertices. Every test is an exact orientation or a comparison
- * of coordinates, so a ring is accepted only when it is truly simple.
+ * of coordinates, so a ring is accepted only when it is truly simple, for
+ * coordinates within about 1e-150 to 1e150: beyond that the orientation
+ * predicate can return a wrong sign (the sweep shares this limit, see #28).
  *
  * A ring that is simple but not star-shaped about that point is not accepted,
  * and neither is one with a repeated vertex, a collinear vertex pair with the
