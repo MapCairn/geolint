@@ -428,7 +428,7 @@ function ghByNumber(name, flags, values) {
 
 /** The one `gh api` read the reviewers use: a file at a commit. */
 const CONTENTS =
-  /^repos\/MapCairn\/mapcairn\/contents\/[A-Za-z0-9_./-]+\?ref=[A-Za-z0-9_./-]+$/;
+  /^repos\/MapCairn\/geolint\/contents\/[A-Za-z0-9_./-]+\?ref=[A-Za-z0-9_./-]+$/;
 
 /**
  * `gh api` with a contents path and nothing else, so it stays a GET.
@@ -539,15 +539,6 @@ const SCRIPTS = {
     isNumber(args[1] ?? "")
       ? undefined
       : "thread.mjs takes issue or pr and a number",
-  "scripts/agents/port.mjs": (args) =>
-    args.length === 1 && isNumber(args[0] ?? "")
-      ? undefined
-      : "port.mjs takes a port number",
-  "scripts/agents/docs-refs.mjs": withOptions(
-    "docs-refs.mjs",
-    { values: { "--ref": isRevision } },
-    each("docs-refs.mjs", (v) => isOperand(v) && v.endsWith(".md"), { min: 1 }),
-  ),
 };
 
 /**

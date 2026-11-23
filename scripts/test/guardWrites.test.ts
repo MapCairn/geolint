@@ -245,7 +245,7 @@ describe("Edit, Write and NotebookEdit path check", () => {
     [
       "a file in the project on macOS",
       MAC,
-      "/Users/dev/geolint/packages/core/src/a.ts",
+      "/Users/dev/geolint/src/engine/a.ts",
     ],
     [
       "a file in the project on Windows",
@@ -301,7 +301,7 @@ describe("Edit, Write and NotebookEdit path check", () => {
     [
       "a worktrees folder one level down",
       LINUX,
-      "/home/dev/geolint/packages/.claude/worktrees/review-12/a.ts",
+      "/home/dev/geolint/src/.claude/worktrees/review-12/a.ts",
     ],
     ["a system file", LINUX, "/etc/hosts"],
     ["a temporary file", LINUX, "/tmp/scratch.ts"],
@@ -385,7 +385,7 @@ describe("Bash commands the shell rules let through", () => {
     'git log --format="%s" -3 origin/main',
     "git diff origin/main...HEAD",
     "git diff --stat",
-    "git show abc123:packages/core/src/a.ts",
+    "git show abc123:src/engine/a.ts",
     "git fetch origin pull/12/head",
     "git rev-parse HEAD",
     "git ls-files packages",
@@ -417,8 +417,8 @@ describe("Bash commands the shell rules let through", () => {
     "gh api repos/MapCairn/geolint/pulls/12",
     "gh api -X GET repos/MapCairn/geolint/pulls/12 -f state=open",
     "node scripts/agents/thread.mjs pr 12",
-    "npx --no-install vitest run packages/core/src/a.test.ts",
-    "npm run port -- 4173",
+    "npx --no-install vitest run src/engine/a.test.ts",
+    "npm run build",
     "ls -la | grep x",
     "cat AGENTS.md",
     "grep -rn 'git stash' docs",
@@ -568,7 +568,7 @@ describe("Bash commands the shell rules refuse", () => {
     ["npm ci", /npm/],
     ["npm install", /npm/],
     ["npm uninstall left-pad", /npm/],
-    ["cd packages/core && npm install", /npm/],
+    ["cd src/engine && npm install", /npm/],
   ])("blocks %s", (command, reason) => {
     const decision = shell(command);
     expect(decision.allow).toBe(false);
@@ -843,6 +843,9 @@ describe("the committed hook configuration", () => {
         "utf8",
       );
       expect(text, agent).toMatch(/guardWrites|hook/);
+      expect(text, agent).toMatch(
+        /no pipe, `;`, `&&`, redirection, `\$`, a backtick, a glob or a here-document\)\. Other tools have no hook/,
+      );
     }
   });
 });
@@ -2070,7 +2073,7 @@ describe("hardening of the write guard (#534)", () => {
       "make -j4 all",
       "make FOO=bar all",
       "make build/out.o",
-      "make -C packages/core test",
+      "make -C src/engine test",
     ])("allows %s", (command) => {
       expect(shell(command).allow).toBe(true);
     });

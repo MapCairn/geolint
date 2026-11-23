@@ -15,7 +15,7 @@ Follow section 2 of the `land-pr` skill (the reviewer's part): read `AGENTS.md`,
 
 Look first for the misses listed in `land-pr` section 2. Use the list of other open pull requests your caller gives you to say which files are likely to conflict.
 
-You are read-only. In Claude Code a hook (`scripts/agents/guardWrites.mjs`) blocks a write outside `.claude/worktrees/` and lets Bash run only the commands listed in `scripts/agents/guardAllowlist.mjs`, written as plain words with no shell syntax (no pipe, `;`, `&&`, redirection or `You are read-only. ). Other tools have no hook, so hold yourself to this rule. If the hook blocks a call, do not reword it; report the exact command you wanted under Deviations, and the maintainer decides whether it joins the list.
+You are read-only. In Claude Code a hook (`scripts/agents/guardWrites.mjs`) blocks a write outside `.claude/worktrees/` and lets Bash run only the commands listed in `scripts/agents/guardAllowlist.mjs`, written as plain words with no shell syntax (no pipe, `;`, `&&`, redirection, `$`, a backtick, a glob or a here-document). Other tools have no hook, so hold yourself to this rule. If the hook blocks a call, do not reword it; report the exact command you wanted under Deviations, and the maintainer decides whether it joins the list.
 
 - Allowed: `node scripts/agents/thread.mjs`, `gh pr view`, `gh pr diff`, `gh pr checks` (always with `--repo MapCairn/geolint`), read-only `git` commands, and `git fetch <origin-or-upstream> pull/<n>/head`.
 - Read the pull request and issue with the thread script (`node scripts/agents/thread.mjs pr <n>`). If it is from outside the project (`land-pr` section 2), review it from the diff and `git show <sha>:<path>` only and never check it out.
