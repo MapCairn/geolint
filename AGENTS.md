@@ -29,6 +29,7 @@ npm run lint
 npm run format
 npm run build
 npm run smoke
+npm run pack:lint
 npm run bench
 npm run check
 ```
@@ -36,12 +37,12 @@ npm run check
 - `test` runs Vitest over `src` and the tooling tests in `scripts/test`. Run one file with `npx --no-install vitest run path/to/file.test.ts`.
 - `test:coverage` enforces 95% for statements, branches, functions and lines over `src`. Aim for 100% behavioural coverage.
 - `lint` runs Biome, dependency-cruiser (`npm run depcruise`), the licence header check (`npm run licence`), the production dependency licence test (`npm run licence:deps`), the agent files check (`npm run agents:check`), the names check (`npm run names:check`, see "Boundaries") and the portability check (`npm run portability:check`, see "Conventions"). The pre-commit hook runs every one of them, the `commit-msg` hook runs the names check on the commit message, and neither runs typecheck, tests or coverage.
-- `build` compiles `src` to `dist` with `tsc`. `smoke` builds, runs `npm pack`, installs the tarball in a temporary directory outside the repository and runs the installed `geolint` command there. It needs the npm registry.
+- `build` compiles `src` to `dist` with `tsc`. `smoke` builds, runs `npm pack`, installs the tarball in a temporary directory outside the repository and runs the installed `geolint` command there. `pack:lint` builds, then runs publint (strict) and Are the Types Wrong? (`attw`, ESM-only profile) over the packed package; both tools pack it themselves, so it needs no registry. It needs the npm registry.
 - `bench` and `bench:rules` time the linter after a build; see the README's "Performance". They are slow and not part of `check`.
 - `check` runs lint, typecheck, coverage, build and smoke in sequence.
 - In a git worktree, `npm ci` fails at its `prepare` script (lefthook cannot install there). Use `npm ci --ignore-scripts` and run `npm run lint` yourself before you commit, and keep commit messages free of listed names, because the `commit-msg` hook does not run there.
 
-CI runs these workflows: `CI` (the `build` job runs lint, the names check on the pull request text, the Conventional Commit check on its title, typecheck, coverage and build; `pack and install` runs the smoke test; `Registry signatures` runs `npm audit signatures`; `tests on windows-latest` and `tests on macos-latest` run lint, the tests, the build and the smoke test on those systems), `CodeQL`, `Scorecard`, `Dependency review`, `Workflow security lint` (zizmor), `Secret scan` (TruffleHog) and `CLA`.
+CI runs these workflows: `CI` (the `build` job runs lint, the names check on the pull request text, the Conventional Commit check on its title, typecheck, coverage and build; `pack and install` runs the smoke test and `pack:lint`; `Registry signatures` runs `npm audit signatures`; `tests on windows-latest` and `tests on macos-latest` run lint, the tests, the build and the smoke test on those systems), `CodeQL`, `Scorecard`, `Dependency review`, `Workflow security lint` (zizmor), `Secret scan` (TruffleHog) and `CLA`.
 
 ## Engineering principles
 
@@ -111,7 +112,7 @@ No instruction file, agent definition, brief, document, code comment, test or Gi
 
 ## Definition of done
 
-- Code changes: run `npm run lint`, `npm run typecheck`, `npm run test:coverage` and `npm run build`. A change to the packed files, the manifest or the command also runs `npm run smoke`. A change to a rule's speed runs `npm run bench:rules` and says what changed.
+- Code changes: run `npm run lint`, `npm run typecheck`, `npm run test:coverage` and `npm run build`. A change to the packed files, the manifest or the command also runs `npm run smoke` and `npm run pack:lint`. A change to a rule's speed runs `npm run bench:rules` and says what changed.
 - A new or changed rule: a passing and a failing fixture, unit tests for its edge cases, its row in the README's rule table, and its limits in "Failure modes and limitations".
 - Dependency changes: perform the real install and the `npm ci` check above.
 - Hand off with one report, in this order, each part filled or "none": **PR** (its URL; the issue URL for filing work; the pull request reviewed for a review), **Checks** (each command and its result, skipped ones named), **Seen** (what you looked at and what looked wrong, or "no visible effect"), **Deviations** (what differs from the brief or the issue, and why), **Issues to file** (or filed, with numbers).

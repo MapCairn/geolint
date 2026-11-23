@@ -130,3 +130,4 @@ jobs:
           cache-dependency-path: package-lock.json
       - run: npm ci --ignore-scripts
       - run: npm run smoke
+      - run: npm run pack:lint

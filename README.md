@@ -191,6 +191,7 @@ npm test
 npm run test:coverage     # the 95 percent floors
 npm run lint
 npm run smoke             # build, npm pack, install the tarball outside the repository, run it
+npm run pack:lint         # build, then publint and Are the Types Wrong? over the packed package
 npm run bench             # the benchmark; run the build first
 npm run bench:rules
 ```

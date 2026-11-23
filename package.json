@@ -58,8 +58,9 @@
     "portability:check": "node scripts/portability-check.mjs",
     "format": "biome format --write .",
     "prepare": "lefthook install --force",
-    "check": "npm run lint && npm run typecheck && npm run test:coverage && npm run build && npm run smoke",
+    "check": "npm run lint && npm run typecheck && npm run test:coverage && npm run build && npm run smoke && npm run pack:lint",
     "smoke": "node scripts/smoke.mjs",
+    "pack:lint": "npm run build && publint run --pack npm --strict && attw --pack . --profile esm-only",
     "build:countries": "node scripts/build-countries.mjs",
     "bench": "node bench/run.mjs",
     "bench:rules": "node bench/rules.mjs"
@@ -69,6 +70,7 @@
     "robust-predicates": "^3.0.3"
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
     "@biomejs/biome": "^2.6.8",
     "@swc/core": "^1.16.22",
     "@types/node": "^26.6.6",
@@ -76,6 +78,7 @@
     "dependency-cruiser": "^18.8.0",
     "fast-check": "^4.10.3",
     "lefthook": "^2.2.2",
+    "publint": "^0.3.25",
     "tinybench": "^6.2.4",
     "typescript": "^7.0.2",
     "vitest": "^5.1.0"
