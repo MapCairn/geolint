@@ -705,6 +705,47 @@ describe("what the reader holds in memory", () => {
   );
 });
 
+describe("when the reader parses a feature", () => {
+  const FEATURE_COUNT = 50;
+
+  /** One chunk holding a whole collection, so every feature arrives in one batch. */
+  function singleChunkCollection(): Uint8Array {
+    const features = Array.from(
+      { length: FEATURE_COUNT },
+      (_, index) =>
+        `{"type":"Feature","id":${index},"properties":null,"geometry":null}`,
+    );
+    return encoder.encode(
+      `{"type":"FeatureCollection","features":[${features.join(",")}]}`,
+    );
+  }
+
+  it("parses a feature only when it is asked for, not the whole chunk at once", async () => {
+    const parse = vi.spyOn(JSON, "parse");
+    try {
+      const result = geoJsonReader.read(fromChunks([singleChunkCollection()]));
+      const iterator = result.features[Symbol.asyncIterator]();
+      await iterator.next();
+      const parsedAfterFirst = parse.mock.calls.length;
+      await iterator.next();
+      expect(parsedAfterFirst).toBeLessThan(FEATURE_COUNT);
+      expect(parse.mock.calls.length).toBe(parsedAfterFirst + 1);
+      await iterator.return?.();
+    } finally {
+      parse.mockRestore();
+    }
+  });
+
+  it("still reports the features before a malformed one, and stops there", async () => {
+    const bytes = encoder.encode(
+      '{"type":"FeatureCollection","features":[{"type":"Feature","id":0},{"type":"Feature","id":1},{"id":},{"type":"Feature","id":3}]}',
+    );
+    const outcome = await readSource(fromChunks([bytes]));
+    expect(outcome.features.map((seen) => seen.index)).toEqual([0, 1]);
+    expect(outcome.error?.message).toContain("features[2]");
+  });
+});
+
 describe("properties of the reader", () => {
   const document = `﻿ {\n "type": "FeatureCollection",\n "name": "é€",\n "features": [\n  {"type":"Feature","properties":{"n":"a \\"b\\" 😀"},"geometry":${POINT}} ,\n  {"type":"Feature","properties":null,"geometry":null}\n ],\n "bbox": [0, 0, 1, 1]\n}\n`;
   const bytes = encoder.encode(document);
