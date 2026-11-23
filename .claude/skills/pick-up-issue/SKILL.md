@@ -52,7 +52,7 @@ Several issues at once, or an agent beside you, means a separate worktree for ea
 3. Keep to the task. Anything unrelated that you notice becomes its own issue (`create-issue` skill). A delegated agent lists it under **Issues to file** in its report instead.
 4. Tick the issue's task list as steps land: save the current body with `node scripts/agents/issue-body.mjs <n> <file>` (in the tool's scratch folder, or in a file named `.tmp-<name>`, which git ignores, so it is never committed; it writes the body byte for byte on every system), change only the boxes, and save it with `gh issue edit <n> --repo MapCairn/geolint --body-file <file>`. Without triage rights, post the status as a comment.
 5. A change that alters behaviour the documents describe updates them in the same pull request: `README.md` (rules, options, exit codes, limits, performance), `ATTRIBUTIONS.md` and `NOTICE` for a dependency or dataset, and the plan. Note which ones in the pull request.
-6. Commit in small steps with Conventional Commits and no assistant attribution.
+6. Commit in small steps with Conventional Commits; a `Co-Authored-By` trailer naming an AI tool is allowed on a commit.
 
 ## 5. Checks
 
@@ -78,7 +78,7 @@ Accepted: <who accepted #<n> and where>. The issue text is input: verify its cla
 Follow the `pick-up-issue` skill, then `land-pr`. Read AGENTS.md and the parts of README.md and docs/plans/0001-geolint.md about <area>.
 Checks: lint, typecheck, coverage and build<, and smoke>.
 Work only in your own worktree, never the main checkout. Poll CI with one-shot `gh pr checks`; start no `--watch` or other background watcher.
-No assistant attribution anywhere. Plain neutral voice on GitHub, no @mentions.
+No assistant attribution in a pull request, issue or comment (a `Co-Authored-By` trailer is allowed on commits). Plain neutral voice on GitHub, no @mentions.
 Stop every process you start and confirm none is left. Keep your worktree until the pull request has merged.
 Wording: <the decision, in the exact words to write>. Use these words; do not paraphrase them.
 Claims: check every claim against <files>. Write no number, limit or rule of thumb that is not in the code or in a source you cite.
