@@ -54,6 +54,25 @@ const LAUNCHED_PUBLISH = [
   "npx -y npm@11.19.1 publish --tag next",
 ];
 
+/** Commands that tag, release or change the manifest's publish state. */
+const RELEASE_STATE_COMMANDS = [
+  "npm version patch",
+  "npm version 1.0.0 --no-git-tag-version",
+  "npm pkg set private=false",
+  "npm pkg delete private",
+  "gh release create v1.0.0",
+  "gh release edit v1.0.0 --draft=false",
+  "gh release delete v1.0.0",
+  "gh release upload v1.0.0 a.tgz",
+  "git tag v1.0.0",
+  "git tag -a v1.0.0 -m x",
+  "git push origin v1.0.0 --tags",
+  "git push --tags",
+  "git push --follow-tags",
+  "git push origin refs/tags/v1.0.0",
+  "git push origin tag v1.0.0",
+];
+
 /** Ways to approve a deployment, or to start a workflow that publishes. */
 const RELEASE_GATE_COMMANDS = [
   "gh api repos/MapCairn/geolint/actions/runs/1/pending_deployments -X POST",
@@ -65,6 +84,7 @@ const RELEASE_GATE_COMMANDS = [
 
 /** Read-only commands the rules block on purpose, because a `*` matches any text; the guide says so. */
 const OVER_BLOCKED = [
+  "git tag --list",
   "npm view @mapcairn/geolint author",
   "npm view @mapcairn/geolint dist-tags",
 ];
@@ -79,6 +99,12 @@ const ALLOWED_COMMANDS = [
   "npm whoami",
   "npm logout",
   "npm view @mapcairn/geolint version",
+  "npm view @mapcairn/geolint version --json",
+  "npm pkg get private",
+  "gh release view v1.0.0",
+  "gh release list",
+  "git ls-remote --tags origin",
+  "git push origin chore/x",
   "npx --no-install vitest run",
   "npx npm@11 whoami",
   "pnpm run build",
@@ -136,6 +162,13 @@ describe("the committed deny list for agents", () => {
     it.each(LAUNCHED_PUBLISH)("denies the launcher form %s", (command) => {
       expect(denied(shell, command), command).toBe(true);
     });
+
+    it.each(RELEASE_STATE_COMMANDS)(
+      "denies the release state command %s",
+      (command) => {
+        expect(denied(shell, command), command).toBe(true);
+      },
+    );
 
     it.each(RELEASE_GATE_COMMANDS)(
       "denies the release gate command %s",
