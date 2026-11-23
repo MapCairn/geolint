@@ -44,6 +44,13 @@ jobs:
         # `shell: bash` turns on pipefail, so a failing `git log` fails the step.
         shell: bash
         run: git log --format=%B "origin/$BASE_REF..HEAD" | node scripts/names-check.mjs text
+      - name: Check that the pull request title is a Conventional Commit
+        if: github.event_name == 'pull_request'
+        # The title reaches the script through the environment, never through
+        # the shell script text.
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: node scripts/prTitleCheck.mjs
       - run: npm run typecheck
       - run: npm run test:coverage
       - name: Upload coverage report

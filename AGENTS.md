@@ -41,7 +41,7 @@ npm run check
 - `check` runs lint, typecheck, coverage, build and smoke in sequence.
 - In a git worktree, `npm ci` fails at its `prepare` script (lefthook cannot install there). Use `npm ci --ignore-scripts` and run `npm run lint` yourself before you commit, and keep commit messages free of listed names, because the `commit-msg` hook does not run there.
 
-CI runs these workflows: `CI` (the `build` job runs lint, the names check on the pull request text, typecheck, coverage and build; `pack and install` runs the smoke test; `Registry signatures` runs `npm audit signatures`; `tests on windows-latest` and `tests on macos-latest` run lint, the tests, the build and the smoke test on those systems), `CodeQL`, `Scorecard`, `Dependency review`, `Workflow security lint` (zizmor), `Secret scan` (TruffleHog) and `CLA`.
+CI runs these workflows: `CI` (the `build` job runs lint, the names check on the pull request text, the Conventional Commit check on its title, typecheck, coverage and build; `pack and install` runs the smoke test; `Registry signatures` runs `npm audit signatures`; `tests on windows-latest` and `tests on macos-latest` run lint, the tests, the build and the smoke test on those systems), `CodeQL`, `Scorecard`, `Dependency review`, `Workflow security lint` (zizmor), `Secret scan` (TruffleHog) and `CLA`.
 
 ## Engineering principles
 
