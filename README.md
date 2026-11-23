@@ -138,7 +138,7 @@ Read this before you trust the heuristic rules.
 
 ## Performance
 
-The benchmark (`npm run bench`, after `npm run build`) generates a 1 MB, a 50 MB and a 500 MB FeatureCollection of small polygons (24 vertices each, six decimal places) and one polygon of 1,000,000 vertices, lints each in a fresh process with every rule on, and prints the time, the speed and the peak resident memory. `npm run bench:rules` times each rule on its own on a 1 MB input, so a slow rule shows up by name.
+The benchmark (`npm run bench`, after `npm run build`) generates a 1 MB, a 50 MB and a 500 MB FeatureCollection of small polygons (24 vertices each, six decimal places) and one polygon of 1,000,000 vertices, lints each in a fresh process with every rule on, and prints the time, the speed and the peak resident memory. `npm run bench:rules` times each rule on its own on a 1 MB input, so a slow rule shows up by name. The small polygons are star-shaped, so `self-intersection` proves them simple in one pass and does not sweep them (see below); the polygon of 1,000,000 vertices is a band between two zigzag edges, which is not star-shaped, so the sweep line does its full work on it.
 
 Targets, set before any profiling: a FeatureCollection lints at 15 MB/s or better on one thread with peak memory under 400 MB whatever its size, and a polygon of 1,000,000 vertices lints in under 10 seconds with under 1 GB.
 
@@ -146,16 +146,18 @@ Results, with every rule on, one thread, each case started with `--max-semi-spac
 
 Machine: Apple M4, 10 logical processors, 16 GB memory, macOS (Darwin 27.2.0), Node 24.22.
 
-| Input                           | Size     | Time    | Speed     | Peak memory | Features |
-| ------------------------------- | -------- | ------- | --------- | ----------- | -------- |
-| FeatureCollection, 1 MB         | 1.0 MB   | 0.05 s  | 19.3 MB/s | 77 MB       | 1,456    |
-| FeatureCollection, 50 MB        | 50.0 MB  | 1.54 s  | 32.5 MB/s | 182 MB      | 72,403   |
-| FeatureCollection, 500 MB       | 500.0 MB | 15.59 s | 32.1 MB/s | 202 MB      | 721,899  |
-| One polygon, 1,000,000 vertices | 23.5 MB  | 0.85 s  | 27.8 MB/s | 718 MB      | 1        |
+| Input                           | Size     | Time   | Speed     | Peak memory | Features |
+| ------------------------------- | -------- | ------ | --------- | ----------- | -------- |
+| FeatureCollection, 1 MB         | 1.0 MB   | 0.03 s | 32.7 MB/s | 76 MB       | 1,456    |
+| FeatureCollection, 50 MB        | 50.0 MB  | 0.85 s | 59.1 MB/s | 173 MB      | 72,403   |
+| FeatureCollection, 500 MB       | 500.0 MB | 7.75 s | 64.5 MB/s | 246 MB      | 721,899  |
+| One polygon, 1,000,000 vertices | 22.7 MB  | 0.71 s | 31.9 MB/s | 713 MB      | 1        |
 
-The speed target is met (19 to 33 MB/s), the polygon target is met (0.85 s, 718 MB) and so is the memory target for a collection (182 MB at 50 MB, 202 MB at 500 MB). Without the flag the same collections peak at 248 MB and 389 MB, also under 400 MB. These runs had no findings: memory grows with the number of findings, because all of them are kept until the end to be sorted ([#12](https://github.com/MapCairn/geolint/issues/12) plans to stream them). Profiling showed that `self-intersection` (the exact sweep line) is about 80 percent of the CPU time on a collection of small polygons; the sweep is tracked in [#3](https://github.com/MapCairn/geolint/issues/3). To measure again, run `npm run build` and then `npm run bench`, on a quiet machine, with `-- --skip-large` to leave out the 500 MB file.
+The speed target is met (33 to 65 MB/s), the polygon target is met (0.71 s, 713 MB) and so is the memory target for a collection (173 MB at 50 MB, 246 MB at 500 MB). Without the flag the same collections peaked at 248 MB and 389 MB when measured before the self-intersection change, also under 400 MB. The collections had no findings, and the polygon has one (a winding order warning): memory grows with the number of findings, because all of them are kept until the end to be sorted ([#12](https://github.com/MapCairn/geolint/issues/12) plans to stream them). Profiling showed that `self-intersection` (the exact sweep line) is about 80 percent of the CPU time on a collection of small polygons; the sweep is tracked in [#3](https://github.com/MapCairn/geolint/issues/3). To measure again, run `npm run build` and then `npm run bench`, on a quiet machine, with `-- --skip-large` to leave out the 500 MB file.
 
 Where the memory went: the reader used to parse every feature of a 1 MB chunk of input as soon as the chunk arrived and queue them, so the parsed copies of a whole chunk were alive together and survived young-generation collections, which promoted them to the old generation, where they waited for a full collection. It now parses a feature when the linter asks for it. On the 50 MB collection that took peak memory from 418 MB to 248 MB without the flag (335 MB to 182 MB with it), and on the 500 MB collection from 509 MB to 389 MB without it. What is left is mostly V8's young generation, whose limit follows the machine's memory and not the input. Limiting it with `--max-semi-space-size=16` lowers peak memory further; the flag has to be given when node starts: `NODE_OPTIONS=--max-semi-space-size=16 geolint ...` for the command, or `node --max-semi-space-size=16 ...` for a program that embeds the library. Setting it later with `v8.setFlagsFromString` has no effect. `npm run bench` starts each case with it.
+
+The sweep line is the expensive part of `self-intersection`, so the rule first tries a cheaper proof for each ring: if the ring goes once round the mean of its vertices, turning the same way at every vertex as seen from that point, it cannot meet itself, and no sweep is run. Every step is an exact orientation test or a comparison of coordinates, so a ring is accepted only when it is truly simple (for coordinates within about 1e-150 to 1e150: beyond that the orientation predicate can return a wrong sign, and the sweep shares this limit, see [#28](https://github.com/MapCairn/geolint/issues/28)); a ring that is not star-shaped about that point, has a repeated vertex or is not closed is swept as before, at the cost of a check that stops at the first edge that fails it. On 28,983 of the benchmark's small polygons the rule took 222 ms before and 14 ms after (best of 9, same machine, Node 24.22); on 20,000 comb-shaped rings that are not star-shaped it took 136 ms before and 141 ms after, so the check costs about 4 percent where it does not help. How often real data is star-shaped depends on the data: rectangles, most buildings and rounded parcels are, courtyards and long winding shapes are not. The sweep itself is unchanged.
 
 ## What it adds
 

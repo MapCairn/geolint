@@ -75,10 +75,25 @@ export async function writeCollection(path, bytes, seed = 1) {
   return count;
 }
 
+/** The distance between neighbouring vertices of the polygon's two zigzag edges, in degrees. */
+const TOOTH_WIDTH = 0.0001;
+/** How far the teeth of the polygon's edges reach from its middle line, in degrees. */
+const TOOTH_NEAR = 0.5;
+const TOOTH_FAR = 10;
+
+/** One vertex of a zigzag edge: teeth alternate between near and far. `side` is 1 above the middle line and -1 below. */
+function toothVertex(index, side) {
+  const reach = index % 2 === 0 ? TOOTH_NEAR : TOOTH_FAR;
+  return `[${(index * TOOTH_WIDTH).toFixed(7)},${(side * reach).toFixed(7)}]`;
+}
+
 /**
- * Writes one Polygon feature with `vertices` vertices to `path`. The ring is a
- * wavy circle that never crosses itself, so the rule that has to prove that
- * (self-intersection) does the full amount of work.
+ * Writes one Polygon feature with about `vertices` vertices to `path`. The ring
+ * is a band between two zigzag edges, above and below a middle line: it never
+ * crosses itself, and it is not star-shaped about any point, so the rule that
+ * has to prove that (self-intersection) does the full amount of work. A ring
+ * that is star-shaped, such as the small polygons of `writeCollection`, can be
+ * proved simple in one pass without a sweep.
  */
 export async function writePolygon(path, vertices) {
   const stream = createWriteStream(path);
@@ -86,7 +101,7 @@ export async function writePolygon(path, vertices) {
     stream,
     '{"type":"Feature","properties":{"name":"big"},"geometry":{"type":"Polygon","coordinates":[[',
   );
-  const radius = 40;
+  const perEdge = Math.floor(vertices / 2);
   let first = true;
   let batch = [];
   const flush = async () => {
@@ -94,17 +109,19 @@ export async function writePolygon(path, vertices) {
     first = false;
     batch = [];
   };
-  for (let i = 0; i < vertices; i++) {
-    const angle = (i / vertices) * 2 * Math.PI;
-    const wave = 1 + 0.1 * Math.sin(angle * 50);
-    const x = (radius * wave * Math.cos(angle)).toFixed(7);
-    const y = (radius * wave * Math.sin(angle)).toFixed(7);
-    batch.push(`[${x},${y}]`);
+  const add = async (vertex) => {
+    batch.push(vertex);
     if (batch.length === 10000) {
       await flush();
     }
+  };
+  for (let i = 0; i < perEdge; i++) {
+    await add(toothVertex(i, 1));
   }
-  batch.push(`[${radius.toFixed(7)},0.0000000]`);
+  for (let i = perEdge - 1; i >= 0; i--) {
+    await add(toothVertex(i, -1));
+  }
+  batch.push(toothVertex(0, 1));
   await flush();
   await write(stream, "]]}}");
   stream.end();
