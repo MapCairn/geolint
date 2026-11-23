@@ -65,20 +65,20 @@
     "bench:rules": "node bench/rules.mjs"
   },
   "dependencies": {
-    "flatbush": "4.7.0",
-    "robust-predicates": "3.0.3"
+    "flatbush": "^4.7.0",
+    "robust-predicates": "^3.0.3"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.6.6",
-    "@swc/core": "1.16.22",
-    "@types/node": "26.6.6",
-    "@vitest/coverage-v8": "5.1.0",
-    "dependency-cruiser": "18.7.2",
-    "fast-check": "4.10.2",
-    "lefthook": "2.2.2",
-    "tinybench": "6.2.3",
-    "typescript": "7.0.2",
-    "vitest": "5.1.0"
+    "@biomejs/biome": "^2.6.6",
+    "@swc/core": "^1.16.22",
+    "@types/node": "^26.6.6",
+    "@vitest/coverage-v8": "^5.1.0",
+    "dependency-cruiser": "^18.7.2",
+    "fast-check": "^4.10.2",
+    "lefthook": "^2.2.2",
+    "tinybench": "^6.2.3",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
   },
   "allowScripts": {
     "lefthook": true,
