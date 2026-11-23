@@ -33,7 +33,7 @@ const FORBIDDEN_NPM_COMMANDS = [
   "ogr",
 ];
 
-/** The programs that can run npm under another name, and the shells the rules cover. */
+/** The shells the deny rules are written for. */
 const SHELLS = ["Bash", "PowerShell"] as const;
 
 /** Publishes started through another launcher, a workspace runner or a pinned npx. */
@@ -61,6 +61,12 @@ const RELEASE_GATE_COMMANDS = [
   "gh workflow run release.yml -f mode=publish-existing",
   "gh api repos/MapCairn/geolint/actions/workflows/release.yml/dispatches -f inputs[mode]=x",
   "gh api -X POST repos/MapCairn/geolint/actions/runs/1/rerun",
+];
+
+/** Read-only commands the rules block on purpose, because a `*` matches any text; the guide says so. */
+const OVER_BLOCKED = [
+  "npm view @mapcairn/geolint author",
+  "npm view @mapcairn/geolint dist-tags",
 ];
 
 /** Commands the rules must leave alone, so the checks, the smoke test and CI watching keep working. */
@@ -95,7 +101,7 @@ function npmForms(name: string): string[] {
   ];
 }
 
-/** Whether a Claude Code wildcard pattern matches a whole command; `*` matches any text. */
+/** A model of Claude Code's wildcard rules (not its own matcher): `*` matches any text, and a trailing ` *` also matches the bare command. */
 function matches(pattern: string, command: string): boolean {
   const escapeText = (text: string) =>
     text.replace(/[.+?^${}()|[\]\\]/g, "\\$&");
@@ -133,6 +139,13 @@ describe("the committed deny list for agents", () => {
 
     it.each(RELEASE_GATE_COMMANDS)(
       "denies the release gate command %s",
+      (command) => {
+        expect(denied(shell, command), command).toBe(true);
+      },
+    );
+
+    it.each(OVER_BLOCKED)(
+      "blocks the read-only command %s on purpose",
       (command) => {
         expect(denied(shell, command), command).toBe(true);
       },
