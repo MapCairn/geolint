@@ -712,6 +712,36 @@ describe("findRingIntersections", () => {
     expect(findRingIntersections([[1, 1]]).intersections).toEqual([]);
   });
 
+  it("answers for a ring it can prove simple as the sweep of its edges does, whatever the options", () => {
+    const wavy: Position[] = Array.from({ length: 12 }, (_, index) => {
+      const angle = (index / 12) * 2 * Math.PI;
+      const radius = index % 2 === 0 ? 3 : 5;
+      return [
+        +(radius * Math.cos(angle)).toFixed(6),
+        +(radius * Math.sin(angle)).toFixed(6),
+      ];
+    });
+    const ring = [...wavy, wavy[0] as Position];
+    const edges = ring
+      .slice(0, -1)
+      .map((start, index) => ({ start, end: ring[index + 1] as Position }));
+    for (const options of [
+      {},
+      { limit: 0 },
+      { limit: 3 },
+      { only: "cross" as const },
+    ]) {
+      const reference = findSegmentIntersections(edges, {
+        ...options,
+        ignore: (first, second, kind) =>
+          kind === "touch" &&
+          (second === first + 1 ||
+            (first === 0 && second === edges.length - 1)),
+      });
+      expect(findRingIntersections(ring, options)).toEqual(reference);
+    }
+  });
+
   it("finds a bow-tie's crossing and names its edges", () => {
     const bowTie: Position[] = [
       [0, 0],
