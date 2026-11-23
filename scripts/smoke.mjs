@@ -40,7 +40,7 @@ const FIXTURES = path.join(PACKAGE, "fixtures");
 const NPM = process.platform === "win32" ? "npm.cmd" : "npm";
 
 /** The age, in days, a dependency release must have to be installed. It is the repository's `.npmrc` setting, which the temporary project does not inherit. */
-const MIN_RELEASE_AGE_DAYS = 7;
+const MIN_RELEASE_AGE_DAYS = 3;
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {

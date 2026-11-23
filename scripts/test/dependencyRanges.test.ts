@@ -64,6 +64,27 @@ describe("the package age rule", () => {
     }
   });
 
+  it("is 3 days in AGENTS.md and the review-security skill", () => {
+    const agents = read("AGENTS.md");
+    expect(agents).toContain(`\`min-release-age=${AGE_DAYS}\``);
+    expect(agents).toContain(`less than ${AGE_DAYS} days ago`);
+    expect(read(".claude/skills/review-security/SKILL.md")).toContain(
+      `at least ${AGE_DAYS} days old`,
+    );
+  });
+
+  it("is 3 days in the pack-and-install check", () => {
+    expect(read("scripts/smoke.mjs")).toMatch(
+      new RegExp(`MIN_RELEASE_AGE_DAYS = ${AGE_DAYS};`),
+    );
+  });
+
+  it("is not described as a different number of days in a guide", () => {
+    expect(read("docs/guides/personal-preferences.md")).not.toMatch(
+      /\b\d+-day rule for packages/,
+    );
+  });
+
   it("is 3 days in the zizmor dependabot-cooldown rule", () => {
     const config = read(".github/zizmor.yml");
     expect(config).toMatch(/dependabot-cooldown:/);
