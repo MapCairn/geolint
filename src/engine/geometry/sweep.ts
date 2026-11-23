@@ -3,6 +3,7 @@
 
 import type { Position } from "./predicates.js";
 import { onSegment, orientation, samePosition } from "./predicates.js";
+import { isProvablySimpleRing } from "./starShapedRing.js";
 
 /**
  * How two segments meet: `cross` at a point inside both, `touch` where an end
@@ -909,11 +910,21 @@ interface RingEdge extends Segment {
  * edges that double back over each other, a spike, do overlap and are reported.
  * Edges of zero length, from a repeated position, are skipped, and the edges
  * either side of one count as consecutive.
+ *
+ * A ring that is star-shaped about the mean of its vertices is proved simple
+ * in a single pass and not swept (see `isProvablySimpleRing`); the answer is
+ * the same.
  */
 export function findRingIntersections(
   ring: readonly Position[],
   options: RingSweepOptions = {},
 ): RingSweepResult {
+  if (isProvablySimpleRing(ring)) {
+    return {
+      intersections: [],
+      stopped: (options.limit ?? Number.POSITIVE_INFINITY) <= 0,
+    };
+  }
   const edges: RingEdge[] = [];
   for (let index = 0; index + 1 < ring.length; index++) {
     const start = ring[index] as Position;

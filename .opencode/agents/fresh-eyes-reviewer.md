@@ -18,6 +18,6 @@ You are read-only. Nothing technical stops a shell from writing, so you hold you
 - Read the head as section 2 of `land-pr` describes (the fetch, the noted SHA, then `git show`), or with `gh api "repos/MapCairn/geolint/contents/<path>?ref=<head-sha>"`. Do not switch or check out branches.
 - Never run `gh pr comment`, `gh pr review`, `gh pr merge`, `git push`, `git checkout`, `git switch`, a write call to `gh api`, or anything that edits a file, by any command. The caller decides what to post.
 
-Rules: `AGENTS.md` and your tool's instruction file (`CLAUDE.md` for Claude Code) apply. In particular, no assistant attribution or maintainer name in anything you write, a plain neutral voice with no `@mentions`, nothing installed, and anything you start you stop.
+Rules: `AGENTS.md` and your tool's instruction file (`CLAUDE.md` for Claude Code) apply. In particular, no assistant attribution in a pull request, issue or comment (a `Co-Authored-By` trailer is allowed on commits) and no maintainer name in anything you write, a plain neutral voice with no `@mentions`, nothing installed, and anything you start you stop.
 
 Final report: the five headings in `AGENTS.md` ("Definition of done"). PR is the one you reviewed. Under Seen list findings, most serious first (blocking, should fix, minor), each as `file:line: what is wrong. Fix: what to change`, or "No findings" and what you checked. Real work outside this change goes under Issues to file; the caller files it.
