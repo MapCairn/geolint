@@ -78,7 +78,21 @@ Contributors use macOS, Linux and Windows, so the scripts, skills and agents are
 
 - The model names and the `fable` model rule, in `CLAUDE.md`, and `CLAUDE.local.md` for your own preferences.
 - Tool limits on agents (their `tools` lists).
+- The write guard hook that keeps the reviewers read-only (see "Keeping reviewers read-only" below).
 - The deny list in `.claude/settings.json` that keeps agents from publishing (see "Keeping agents from publishing" below).
+
+## Keeping reviewers read-only
+
+`fresh-eyes-reviewer`, `lean-reviewer` and `security-reviewer` change nothing, and `test-reviewer` edits code only inside a detached worktree of its own under `.claude/worktrees/`. In Claude Code a `PreToolUse` hook enforces that: `.claude/settings.json` runs `node "$CLAUDE_PROJECT_DIR/scripts/agents/guardWrites.mjs"` before every `Edit`, `Write`, `MultiEdit`, `NotebookEdit` and `Bash` call. The path starts at `CLAUDE_PROJECT_DIR`, so the hook works from any folder, and Claude Code runs it through its shell (Git Bash on Windows), so one string serves every system.
+
+The hook input names the calling subagent in `agent_type`. The guard acts only on the four names in `READ_ONLY_AGENTS` (`scripts/agents/guardWrites.mjs`), so the main session, the `implementer` and any other agent are never blocked. Input it cannot parse exits 0 with a warning, so a fault in the guard never stops the main session; a fault while deciding on a reviewer's call blocks that call. If Claude Code cannot start the script, or it times out, Claude Code reports a hook error and lets the call through, which the script cannot change.
+
+For a reviewer:
+
+- `Edit`, `Write`, `MultiEdit` and `NotebookEdit` are allowed only on a path inside `.claude/worktrees/<name>/` of the project or inside the session scratchpad, and never on a path with a `.git` segment. Paths are read as macOS, Linux and Windows write them (backslashes, drive letters, Git Bash `/c/` paths, `.` and `..`, case-insensitive file systems, symbolic links), and a path that depends on `$VAR`, `~` or a glob is blocked rather than guessed. The scratchpad is not allowed on Windows, where its folder is not known.
+- A `Bash` command runs only if it is on the default-deny allowlist in `scripts/agents/guardAllowlist.mjs`: plain words with no shell syntax (no pipe, `;`, redirection, `$`, backtick, glob or here-document), matching a listed command and its listed options. The older shell rules in `guardCommands.mjs` can then only add a refusal. A reviewer that needs another command reports it under Deviations, and the maintainer decides whether it joins the list.
+
+It is a tripwire, not a sandbox: the allowed commands run with the agent's own permissions, `git fetch` and `gh` reach the network, and the guard reads the text of a command, not what a program does (Vitest, for `test-reviewer`, runs whatever the worktree's tests do). Other tools do not run the hook, so the role text states the same limits as an instruction. `scripts/test/guardWrites.test.ts` covers the paths, the shell rules, the allowlist and the committed configuration.
 
 ## Keeping agents from publishing
 
