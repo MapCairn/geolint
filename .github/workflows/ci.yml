@@ -51,6 +51,15 @@ jobs:
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: node scripts/prTitleCheck.mjs
+      - name: Warn when the pull request description lacks an issue link or a Checks section
+        if: github.event_name == 'pull_request'
+        # Never fails the build: each finding is a warning annotation. The text
+        # reaches the script through the environment, never through the shell
+        # script text.
+        env:
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: node scripts/prBodyCheck.mjs
       - run: npm run typecheck
       - run: npm run test:coverage
       - name: Upload coverage report
