@@ -83,11 +83,7 @@ const RELEASE_GATE_COMMANDS = [
 ];
 
 /** Read-only commands the rules block on purpose, because a `*` matches any text; the guide says so. */
-const OVER_BLOCKED = [
-  "git tag --list",
-  "npm view @mapcairn/geolint author",
-  "npm view @mapcairn/geolint dist-tags",
-];
+const OVER_BLOCKED = ["git tag --list"];
 
 /** Commands the rules must leave alone, so the checks, the smoke test and CI watching keep working. */
 const ALLOWED_COMMANDS = [
@@ -100,6 +96,9 @@ const ALLOWED_COMMANDS = [
   "npm logout",
   "npm view @mapcairn/geolint version",
   "npm view @mapcairn/geolint version --json",
+  "npm view @mapcairn/geolint dist-tags --json",
+  "npm view @mapcairn/geolint author",
+  "npm view @mapcairn/geolint time --json",
   "npm pkg get private",
   "gh release view v1.0.0",
   "gh release list",
@@ -124,6 +123,15 @@ function npmForms(name: string): string[] {
     `npx npm@latest ${name}`,
     `npx -y npm@11.19.1 ${name} --tag next`,
     `corepack npm ${name}`,
+    `npm exec npm ${name}`,
+    `npm exec -- npm ${name} --tag next`,
+    `npm x npm ${name}`,
+    `npm --json ${name}`,
+    `npm --prefix=. ${name} --tag next`,
+    `npm -w core ${name}`,
+    `npm -C dir ${name}`,
+    `npm explore pkg -- npm ${name}`,
+    `npm explore pkg npm ${name} --tag next`,
   ];
 }
 
