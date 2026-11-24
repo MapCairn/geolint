@@ -132,6 +132,9 @@ function npmForms(name: string): string[] {
     `npm -C dir ${name}`,
     `npm explore pkg -- npm ${name}`,
     `npm explore pkg npm ${name} --tag next`,
+    `npm exe -- npm ${name}`,
+    `npm explo pkg -- npm ${name}`,
+    `npm explor pkg npm ${name} --tag next`,
   ];
 }
 
