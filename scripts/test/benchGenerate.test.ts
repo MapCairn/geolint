@@ -19,6 +19,10 @@ afterEach(() => {
   }
 });
 
+async function* chunksOf(bytes: Uint8Array): AsyncGenerator<Uint8Array> {
+  yield bytes;
+}
+
 async function generate(options?: { wrongWinding: boolean }) {
   const { writeCollection } = await import(GENERATOR);
   const folder = mkdtempSync(path.join(tmpdir(), "geolint-bench-"));
@@ -37,7 +41,7 @@ describe("the benchmark generator", () => {
   it("writes a collection with no findings by default", async () => {
     const { features, bytes } = await generate();
 
-    const report = await lintBytes([bytes]);
+    const report = await lintBytes(chunksOf(bytes));
 
     expect(report.featureCount).toBe(features);
     expect(report.findings).toEqual([]);
@@ -46,7 +50,7 @@ describe("the benchmark generator", () => {
   it("writes a collection in which every polygon is wound the wrong way", async () => {
     const { features, bytes } = await generate({ wrongWinding: true });
 
-    const report = await lintBytes([bytes]);
+    const report = await lintBytes(chunksOf(bytes));
 
     expect(report.featureCount).toBe(features);
     expect(report.findings).toHaveLength(features);
