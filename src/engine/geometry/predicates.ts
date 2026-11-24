@@ -18,8 +18,8 @@ function y(position: Position): number {
  * Shewchuk's adaptive exact arithmetic, so the answer is right for coordinates
  * between about 1e-150 and 1e150 (no epsilon, no rounding surprises). Outside
  * that range the intermediate products underflow or overflow, and a triangle
- * that is not collinear can come back as 0 (below about 1e-160 and above about
- * 1e160). Geographic coordinates are far inside the range.
+ * that is not collinear can come back as 0 (below about 1e-162 and above
+ * about 1e154). Geographic coordinates are far inside the range.
  *
  * Longitude is x and latitude is y. Returns 1 when `a`, `b`, `c` turn
  * counter-clockwise (`c` is to the left), -1 when they turn clockwise and 0

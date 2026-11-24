@@ -23,8 +23,18 @@ describe("orientation", () => {
     expect(orientation([0, 0], [1, 1], [2, 2])).toBe(0);
   });
 
+  describe("inside the range of about 1e-150 to 1e150", () => {
+    it.each([1e-150, 1e150])(
+      "gives the exact sign for a triangle of size %s",
+      (size) => {
+        expect(orientation([0, 0], [size, 0], [0, size])).toBe(1);
+        expect(orientation([0, 0], [0, size], [size, 0])).toBe(-1);
+      },
+    );
+  });
+
   describe("outside the range of about 1e-150 to 1e150", () => {
-    it("returns 0 for a clearly non-collinear triangle below about 1e-160", () => {
+    it("returns 0 for a clearly non-collinear triangle below about 1e-162", () => {
       const triangle: readonly [Position, Position, Position] = [
         [0, 0],
         [1e-165, 0],
@@ -35,11 +45,11 @@ describe("orientation", () => {
       expect(orientation(...triangle)).toBe(0);
     });
 
-    it("returns 0 for a non-collinear triangle above about 1e160", () => {
+    it("returns 0 for a non-collinear triangle above about 1e154", () => {
       const triangle: readonly [Position, Position, Position] = [
         [0, 0],
-        [3e200, 1e200],
-        [1e200, 3e200],
+        [3e154, 1e154],
+        [1e154, 3e154],
       ];
 
       expect(orientation(...scaled(triangle, 2 ** -600))).toBe(1);
