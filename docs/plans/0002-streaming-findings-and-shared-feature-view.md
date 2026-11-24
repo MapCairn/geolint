@@ -47,10 +47,10 @@ Options rejected:
 
 Every rule that reads geometry calls `leafGeometries`, `ringsOf`, `linesOf` or `matchingPositions` (`src/engine/geometry/walk.ts`) on the same feature, and each call walks and validates the coordinates again. #3 measured this at about 10 percent of the CPU time.
 
-- **Chosen: memoise in `walk.ts`.** `leafGeometries(feature)` keeps its result in a `WeakMap` keyed by the feature object, and `ringsOf` and `linesOf` keep theirs keyed by the leaf. The first rule to ask pays, the others reuse it, and the entry goes away with the feature. The `Rule` interface does not change, no rule needs editing, and a direct call `check(feature, context)` works as before. The results are typed `readonly` so a rule cannot change what the next one sees. A non-object feature is not cached.
+- **Chosen: memoise in `walk.ts`.** `leafGeometries(feature)`, `ringsOf` and `linesOf` keep their results for the feature read last. The first rule to ask pays, the others reuse it, and the next feature replaces the entry, so one feature is held at most. A `WeakMap` keyed by every feature was built first and measured: no faster, and peak memory rose from about 180 MB to 250 to 275 MB on the 50 MB collection, so it was dropped for the one-feature entry (0.83 s to 0.67 s, memory unchanged). The `Rule` interface does not change, no rule needs editing, and a direct call `check(feature, context)` works as before. The results are typed `readonly` so a rule cannot change what the next one sees. A non-object feature is not cached.
 - **Rejected: pass a `FeatureView` to `Rule.check`.** It is the explicit design and it is what #3 first proposed, but it changes the signature of every rule, `fix` and every test call, and it asks the engine to build the view for rules that do not read geometry. It is worth reconsidering only if the memoised version measures no better.
 
-The memoised version relies on two things that already hold: a rule never mutates the parsed feature, and the fix passes build new objects (so a repaired feature gets its own entries).
+The memoised version relies on two things that already hold: a rule never mutates the parsed feature, and the fix passes build new objects (so a repaired feature is a different object and replaces the entry), and that features are linted one at a time.
 
 ## Tests
 
