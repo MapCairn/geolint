@@ -138,6 +138,55 @@ describe("formatText", () => {
   });
 });
 
+describe("formatText escaping", () => {
+  function messageLine(message: string): string {
+    const text = formatText([
+      file("f", [{ ...finding("warning", "/x"), message }]),
+    ]);
+    const line = text.split("\n")[0] as string;
+    return line.slice(line.indexOf("/x ") + "/x ".length);
+  }
+
+  it.each([
+    ["a plain message", "plain text", "plain text"],
+    [
+      "a message with no characters to escape",
+      "naïve café 東京 😀",
+      "naïve café 東京 😀",
+    ],
+    ["the first code that is not a control", "\u0020~\u00a0", "\u0020~\u00a0"],
+    ["a tab", "a\tb", "a\\tb"],
+    ["a newline", "a\nb", "a\\nb"],
+    ["the lowest control", "\u0000", "\\x00"],
+    ["the highest C0 control", "\u001f", "\\x1f"],
+    ["delete", "\u007f", "\\x7f"],
+    ["the highest C1 control", "\u009f", "\\x9f"],
+    [
+      "a control at the start and at the end",
+      "\u001bred\u001b",
+      "\\x1bred\\x1b",
+    ],
+    ["controls next to each other", "a\r\n\u001bb", "a\\x0d\\n\\x1bb"],
+    ["a control between two emoji", "😀\u0007😀", "😀\\x07😀"],
+  ])("writes %s as expected", (_name, message, expected) => {
+    expect(messageLine(message)).toBe(expected);
+  });
+
+  it("writes one line for each of many findings, with and without controls", () => {
+    const findings = Array.from({ length: 20_000 }, (_, index) => ({
+      ...finding("warning", `/features/${index}`),
+      message: index % 2 === 0 ? "wound clockwise" : "name is \u001b[31mred",
+    }));
+
+    const lines = formatText([file("f", findings)]).split("\n");
+
+    expect(lines).toHaveLength(findings.length + 2);
+    expect(lines[0]).toContain("wound clockwise");
+    expect(lines[1]).toContain("name is \\x1b[31mred");
+    expect(lines.at(-3)).toContain("name is \\x1b[31mred");
+  });
+});
+
 describe("formatJson", () => {
   it("is versioned, has a summary, and carries every finding", () => {
     const parsed = JSON.parse(
