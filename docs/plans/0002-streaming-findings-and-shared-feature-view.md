@@ -1,6 +1,6 @@
 # 0002: Stream findings out per feature, and share one view of each feature between rules
 
-Status: proposed. Tracking issue: [#12](https://github.com/MapCairn/geolint/issues/12). It carries out two tasks of [#3](https://github.com/MapCairn/geolint/issues/3).
+Status: in progress. Tracking issue: [#12](https://github.com/MapCairn/geolint/issues/12). It carries out two tasks of [#3](https://github.com/MapCairn/geolint/issues/3).
 
 ## Goal
 
@@ -85,9 +85,16 @@ Steps 3 to 6 each build and pass on their own; 4 and 5 can swap.
 
 ## Decided and open
 
-Decided: none yet. The plan is for review.
+Decided by the maintainer on 2026-11-24, taking the recommendations below as written:
 
-Open, each with a recommendation:
+1. Document-level findings are written after the feature findings, and the README says so.
+2. In the JSON output `findings` is written before `featureCount`; `version` stays 1.
+3. The `--jobs` path stays buffered per file, and the README says memory is bounded per file there.
+4. The shared feature view (step 2) is done first, and whether to build streaming (steps 3 to 6) is decided from the figure in step 1.
+
+Open: whether to build streaming at all, until step 1 reports. Issues for steps 3 to 6 are filed once it does.
+
+Recommendations the decisions above were taken from:
 
 1. **Order of document-level findings.** Today every finding is sorted together by path, so a finding at `/crs` or at the root comes before the features and one at `/type` comes after them. Streaming cannot place a finding it learns of at the end ahead of findings already written. Recommendation: write feature findings in document order, then document-level findings, and say so in the README. The alternative, buffering all output, defeats the purpose.
 2. **JSON key order.** `featureCount` comes before `findings` today and is known only at the end. Recommendation: write `findings` first and `featureCount` after it. JSON readers do not depend on key order, but the bytes change, so it is the maintainer's call as a change to the public output format. Keep `version: 1`.
