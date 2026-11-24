@@ -24,8 +24,13 @@ export function seeded(seed) {
 
 const VERTICES_PER_FEATURE = 24;
 
-/** One feature: a small polygon of 24 vertices with six-decimal coordinates and a few properties. */
-function feature(random, index) {
+/**
+ * One feature: a small polygon of 24 vertices with six-decimal coordinates and a
+ * few properties. The ring goes counter-clockwise, which RFC 7946 wants for an
+ * exterior; with `wrongWinding` it goes clockwise, so the feature has one
+ * `winding-order` finding.
+ */
+function feature(random, index, wrongWinding) {
   const centreLongitude = -170 + random() * 340;
   const centreLatitude = -75 + random() * 150;
   const ring = [];
@@ -36,6 +41,9 @@ function feature(random, index) {
       +(centreLongitude + radius * Math.cos(angle)).toFixed(6),
       +(centreLatitude + radius * Math.sin(angle)).toFixed(6),
     ]);
+  }
+  if (wrongWinding) {
+    ring.reverse();
   }
   ring.push(ring[0]);
   return JSON.stringify({
@@ -56,15 +64,19 @@ async function write(stream, text) {
   }
 }
 
-/** Writes a FeatureCollection of at least `bytes` bytes to `path`, and returns the feature count. */
-export async function writeCollection(path, bytes, seed = 1) {
+/**
+ * Writes a FeatureCollection of at least `bytes` bytes to `path`, and returns
+ * the feature count. `options.wrongWinding` winds every polygon the wrong way,
+ * so every feature has a finding.
+ */
+export async function writeCollection(path, bytes, seed = 1, options = {}) {
   const random = seeded(seed);
   const stream = createWriteStream(path);
   await write(stream, '{"type":"FeatureCollection","features":[');
   let written = 40;
   let count = 0;
   while (written < bytes) {
-    const text = `${count === 0 ? "" : ","}${feature(random, count)}`;
+    const text = `${count === 0 ? "" : ","}${feature(random, count, options.wrongWinding === true)}`;
     await write(stream, text);
     written += text.length;
     count += 1;
