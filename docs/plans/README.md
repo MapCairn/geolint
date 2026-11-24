@@ -6,7 +6,7 @@ A plan gets its own pull request, reviewed before any code is written, only when
 
 Open plans:
 
-- [0002: Stream findings out per feature, and share one view of each feature between rules](0002-streaming-findings-and-shared-feature-view.md), tracking issue [#12](https://github.com/MapCairn/geolint/issues/12), proposed.
+- [0002: Stream findings out per feature, and share one view of each feature between rules](0002-streaming-findings-and-shared-feature-view.md), tracking issue [#12](https://github.com/MapCairn/geolint/issues/12), in progress.
 
 Done plans, kept as the design record:
 
