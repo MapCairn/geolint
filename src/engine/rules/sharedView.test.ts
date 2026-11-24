@@ -1,7 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright MapCairn contributors
 import { describe, expect, it } from "vitest";
-import { leafGeometries, linesOf, ringsOf } from "../geometry/walk.js";
+import {
+  type LeafGeometry,
+  leafGeometries,
+  linesOf,
+  ringsOf,
+} from "../geometry/walk.js";
 import type { RuleContext } from "../types.js";
 import { fixLeaves } from "./fixSupport.js";
 import { rules } from "./index.js";
@@ -73,8 +78,8 @@ describe("the shared view of a feature", () => {
     const [leaf] = leafGeometries(feature);
 
     expect(leafGeometries(feature)).toBe(leafGeometries(feature));
-    expect(ringsOf(leaf as never)).toBe(ringsOf(leaf as never));
-    expect(linesOf(leaf as never)).toBe(linesOf(leaf as never));
+    expect(ringsOf(leaf as LeafGeometry)).toBe(ringsOf(leaf as LeafGeometry));
+    expect(linesOf(leaf as LeafGeometry)).toBe(linesOf(leaf as LeafGeometry));
   });
 
   it("does not serve a repaired feature from the entry of the original", () => {
@@ -92,6 +97,38 @@ describe("the shared view of a feature", () => {
       [...CLOCKWISE_RING].reverse(),
     ]);
     expect(leafGeometries(original)[0]?.coordinates).toEqual([CLOCKWISE_RING]);
+  });
+
+  it("gives the right rings for a leaf of a feature that is not the one read last", () => {
+    const first = polygonFeature();
+    const second = polygonFeature();
+    const [leafOfFirst] = leafGeometries(first);
+    leafGeometries(second);
+
+    const rings = ringsOf(leafOfFirst as LeafGeometry);
+
+    expect(rings.map((ring) => ring.positions)).toEqual([CLOCKWISE_RING]);
+    expect(ringsOf(leafOfFirst as LeafGeometry)).toEqual(rings);
+  });
+
+  it("shares the view of a collection with many leaves", () => {
+    const geometries = Array.from({ length: 2000 }, () => ({
+      type: "Polygon",
+      coordinates: [CLOCKWISE_RING],
+    }));
+    const feature = {
+      type: "Feature",
+      properties: {},
+      geometry: { type: "GeometryCollection", geometries },
+    };
+
+    const leaves = leafGeometries(feature);
+
+    expect(leaves).toHaveLength(2000);
+    expect(leafGeometries(feature)).toBe(leaves);
+    for (const leaf of leaves) {
+      expect(ringsOf(leaf)).toBe(ringsOf(leaf));
+    }
   });
 
   it("lets every rule read a feature that is frozen all the way down", () => {

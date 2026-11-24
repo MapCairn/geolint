@@ -47,10 +47,6 @@ interface FeatureView {
 
 let lastView: FeatureView | undefined;
 
-function viewOf(leaf: LeafGeometry): FeatureView | undefined {
-  return lastView?.leaves.includes(leaf) ? lastView : undefined;
-}
-
 function isLeafType(value: unknown): value is LeafType {
   return typeof value === "string" && LEAF_TYPES.has(value);
 }
@@ -95,7 +91,9 @@ function collect(
  * caller, which is why it is `readonly`: the rules never change a feature and
  * run one feature at a time, so the first rule to ask pays and the others reuse
  * it. A different feature replaces the entry, so one feature is held at most.
- * A value that is not an object is not cached.
+ * A value that is not an object is not cached. A feature must not be changed
+ * between reads: a changed feature has to be a new object (as `fixLeaves`
+ * returns), or the old result is served.
  */
 export function leafGeometries(feature: unknown): readonly LeafGeometry[] {
   if (!isObject(feature)) {
@@ -168,7 +166,7 @@ function readLines(leaf: LeafGeometry): RunRef[] {
  * skipped. Shared like `leafGeometries`, for the leaves of the feature read last.
  */
 export function linesOf(leaf: LeafGeometry): readonly RunRef[] {
-  const view = viewOf(leaf);
+  const view = lastView;
   const known = view?.lines?.get(leaf);
   if (known !== undefined) {
     return known;
@@ -218,7 +216,7 @@ function readRings(leaf: LeafGeometry): RingRef[] {
  * Shared like `leafGeometries`, for the leaves of the feature read last.
  */
 export function ringsOf(leaf: LeafGeometry): readonly RingRef[] {
-  const view = viewOf(leaf);
+  const view = lastView;
   const known = view?.rings?.get(leaf);
   if (known !== undefined) {
     return known;
