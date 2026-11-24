@@ -93,15 +93,25 @@ function escapeControl(code: number): string {
  * Replaces control characters (an escape sequence in a `crs` name that a message
  * echoes, a newline in a file name) with `\xNN`, `\n` or `\t`, so that text output
  * cannot move the cursor, change colours or split a finding over two lines.
+ * A text with none comes back as it is, and one with some is cut and joined in
+ * one go, because adding a character at a time to a string builds a chain of
+ * nodes that costs several kilobytes for every finding until it is flattened.
  */
 function printable(text: string): string {
-  let result = "";
-  for (const character of text) {
-    result += isControl(character.charCodeAt(0))
-      ? escapeControl(character.charCodeAt(0))
-      : character;
+  const parts: string[] = [];
+  let kept = 0;
+  for (let index = 0; index < text.length; index++) {
+    const code = text.charCodeAt(index);
+    if (isControl(code)) {
+      parts.push(text.slice(kept, index), escapeControl(code));
+      kept = index + 1;
+    }
   }
-  return result;
+  if (parts.length === 0) {
+    return text;
+  }
+  parts.push(text.slice(kept));
+  return parts.join("");
 }
 
 function findingLine(file: string, finding: Finding): string {
