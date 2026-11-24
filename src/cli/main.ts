@@ -14,22 +14,24 @@ import {
   EXIT,
   exitCodeFor,
   type FileReport,
-  writeJsonReport,
-  writeTextReport,
+  jsonReportPieces,
+  textReportPieces,
 } from "../engine/report.js";
 import { rules } from "../engine/rules/index.js";
-import { writeSarifReport } from "../engine/sarif.js";
+import { sarifReportPieces } from "../engine/sarif.js";
 import { expandInputs, NoMatchError, STDIN } from "../node/files.js";
 import { planFixInputs } from "../node/fixFile.js";
 import { type FileTask, lintFile } from "../node/lintFile.js";
 import { mapInThreads } from "../node/pool.js";
+import { type PieceOutput, writePieces } from "../node/writePieces.js";
 
 /** The output formats the command can write. */
 export const FORMATS = ["text", "json", "sarif"] as const;
 
 /** Everything the command needs from its surroundings, so a test can supply fakes. */
 export interface CliIo {
-  readonly stdout: { write(text: string): void };
+  /** Where the report goes. A real stream is waited on when it is full; see `writePieces`. */
+  readonly stdout: PieceOutput;
   readonly stderr: { write(text: string): void };
   /** The bytes of standard input. Called only when `-` is an input. */
   readonly stdin: () => AsyncIterable<Uint8Array>;
@@ -193,22 +195,18 @@ async function lintAll(
   return reports;
 }
 
-/** Writes the report in the chosen format a piece at a time, so a very large one is never one string. */
-function writeReport(
+/** The report in the chosen format as pieces, so a very large one is never one string. */
+function reportPieces(
   format: Parsed["format"],
   reports: readonly FileReport[],
-  write: (text: string) => void,
-): void {
+): Iterable<string> {
   switch (format) {
     case "json":
-      writeJsonReport(reports, write);
-      break;
+      return jsonReportPieces(reports);
     case "sarif":
-      writeSarifReport(reports, rules, write);
-      break;
+      return sarifReportPieces(reports, rules);
     case "text":
-      writeTextReport(reports, write);
-      break;
+      return textReportPieces(reports);
   }
 }
 
@@ -290,7 +288,7 @@ export async function main(
     for (const note of reports.flatMap((entry) => entry.notes ?? [])) {
       io.stderr.write(`${note}\n`);
     }
-    writeReport(parsed.format, reports, (text) => io.stdout.write(text));
+    await writePieces(reportPieces(parsed.format, reports), io.stdout);
     return exitCodeFor(reports);
   } catch (error) {
     return reportFailure(error, io);

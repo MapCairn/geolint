@@ -2,9 +2,6 @@
 // Copyright MapCairn contributors
 import { isObject } from "./json.js";
 
-/** Receives the text of a document a piece at a time, in order. */
-export type Sink = (text: string) => void;
-
 const INDENT = "  ";
 
 /**
@@ -32,24 +29,21 @@ export class LazyArray {
   }
 }
 
-/** Gathers text and hands it to a sink in pieces of about 64 KB. Call `flush` at the end. */
-export class Gatherer {
-  private pending = "";
-
-  constructor(private readonly sink: Sink) {}
-
-  add(text: string): void {
-    this.pending += text;
-    if (this.pending.length >= FLUSH_AT_CHARACTERS) {
-      this.flush();
+/**
+ * Joins small pieces into pieces of about 64 KB, so whatever receives them is
+ * not called for every member. Nothing is held back at the end.
+ */
+export function* batched(pieces: Iterable<string>): Generator<string> {
+  let pending = "";
+  for (const piece of pieces) {
+    pending += piece;
+    if (pending.length >= FLUSH_AT_CHARACTERS) {
+      yield pending;
+      pending = "";
     }
   }
-
-  flush(): void {
-    if (this.pending !== "") {
-      this.sink(this.pending);
-      this.pending = "";
-    }
+  if (pending !== "") {
+    yield pending;
   }
 }
 
@@ -62,20 +56,19 @@ function wholeValue(value: unknown, level: number): string {
   return text.replaceAll("\n", `\n${padding(level)}`);
 }
 
-function writeMembers(
+function* memberPieces(
   members: Iterable<unknown>,
   depth: number,
   level: number,
-  out: Gatherer,
-): void {
+): Generator<string> {
   let first = true;
   for (const member of members) {
-    out.add(first ? "[\n" : ",\n");
-    out.add(padding(level + 1));
-    writeValue(member, depth + 1, level + 1, out);
+    yield first ? "[\n" : ",\n";
+    yield padding(level + 1);
+    yield* valuePieces(member, depth + 1, level + 1);
     first = false;
   }
-  out.add(first ? "[]" : `\n${padding(level)}]`);
+  yield first ? "[]" : `\n${padding(level)}]`;
 }
 
 /** Whether `JSON.stringify` writes an object member with this value: it leaves out `undefined`, functions and symbols. */
@@ -91,63 +84,59 @@ function hasToJson(value: unknown): boolean {
   return isObject(value) && typeof value.toJSON === "function";
 }
 
-function writeProperties(
+function* propertyPieces(
   object: Readonly<Record<string, unknown>>,
   depth: number,
   level: number,
-  out: Gatherer,
-): void {
+): Generator<string> {
   let first = true;
   for (const [name, value] of Object.entries(object)) {
     if (!isWritten(value)) {
       continue;
     }
-    out.add(first ? "{\n" : ",\n");
-    out.add(`${padding(level + 1)}${JSON.stringify(name)}: `);
-    writeValue(value, depth + 1, level + 1, out);
+    yield first ? "{\n" : ",\n";
+    yield `${padding(level + 1)}${JSON.stringify(name)}: `;
+    yield* valuePieces(value, depth + 1, level + 1);
     first = false;
   }
-  out.add(first ? "{}" : `\n${padding(level)}}`);
+  yield first ? "{}" : `\n${padding(level)}}`;
 }
 
-function writeValue(
+function* valuePieces(
   value: unknown,
   depth: number,
   level: number,
-  out: Gatherer,
-): void {
+): Generator<string> {
   if (value instanceof LazyArray) {
-    writeMembers(value.members(), depth, level, out);
+    yield* memberPieces(value.members(), depth, level);
   } else if (hasToJson(value)) {
-    out.add(wholeValue(value, level));
+    yield wholeValue(value, level);
   } else if (depth < EXPANDED_DEPTH && Array.isArray(value)) {
-    writeMembers(value, depth, level, out);
+    yield* memberPieces(value, depth, level);
   } else if (depth < EXPANDED_DEPTH && isObject(value)) {
-    writeProperties(value, depth, level, out);
+    yield* propertyPieces(value, depth, level);
   } else {
-    out.add(wholeValue(value, level));
+    yield wholeValue(value, level);
   }
 }
 
 /**
- * Writes `value` to `write` as `JSON.stringify(value, null, 2)` followed by
- * a newline would give it, byte for byte, but a member at a time, so a
- * document of hundreds of megabytes never exists as one string (a string is
- * limited to about 536 million characters). A `LazyArray` anywhere in the
- * first levels is written as the array of its members, one at a time.
- *
- * `write` gets pieces of about 64 KB. Values must be plain JSON data.
+ * The text of `JSON.stringify(value, null, 2)` followed by a newline, byte for
+ * byte, as pieces of about 64 KB produced one at a time, so a document of
+ * hundreds of megabytes never exists as one string (a string is limited to
+ * about 536 million characters) and a caller that waits between pieces holds
+ * only one. A `LazyArray` in the first levels is written as the array of its
+ * members, one at a time. Values must be plain JSON data.
  */
-export function writeJson(value: unknown, write: Sink): void {
-  const out = new Gatherer(write);
-  writeValue(value, 0, 0, out);
-  out.add("\n");
-  out.flush();
+export function* jsonPieces(value: unknown): Generator<string> {
+  function* whole(): Generator<string> {
+    yield* valuePieces(value, 0, 0);
+    yield "\n";
+  }
+  yield* batched(whole());
 }
 
-/** Runs a writer into memory and returns what it wrote as one string. */
-export function collected(writer: (write: Sink) => void): string {
-  const pieces: string[] = [];
-  writer((piece) => pieces.push(piece));
-  return pieces.join("");
+/** Joins pieces into one string. */
+export function joined(pieces: Iterable<string>): string {
+  return [...pieces].join("");
 }

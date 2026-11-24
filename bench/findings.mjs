@@ -33,9 +33,9 @@ const {
   formatText,
   formatJson,
   formatSarif,
-  writeTextReport,
-  writeJsonReport,
-  writeSarifReport,
+  textReportPieces,
+  jsonReportPieces,
+  sarifReportPieces,
   rules,
 } = await dist("../dist/index.js");
 const { fileChunks } = await dist("../dist/node/index.js");
@@ -63,27 +63,19 @@ try {
   const outputs = {};
   let previous = afterReport;
   for (const [name, format, stream] of [
-    [
-      "text",
-      () => formatText(reports),
-      (sink) => writeTextReport(reports, sink),
-    ],
-    [
-      "json",
-      () => formatJson(reports),
-      (sink) => writeJsonReport(reports, sink),
-    ],
+    ["text", () => formatText(reports), () => textReportPieces(reports)],
+    ["json", () => formatJson(reports), () => jsonReportPieces(reports)],
     [
       "sarif",
       () => formatSarif(reports, rules),
-      (sink) => writeSarifReport(reports, rules, sink),
+      () => sarifReportPieces(reports, rules),
     ],
   ]) {
     process.stderr.write(`formatting ${name}\n`);
     let streamed = 0;
-    stream((piece) => {
+    for (const piece of stream()) {
       streamed += piece.length;
-    });
+    }
     outputs[name] = { streamedCharacters: streamed };
     let output;
     try {

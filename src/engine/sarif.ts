@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright MapCairn contributors
-import { collected, LazyArray, type Sink, writeJson } from "./jsonWriter.js";
+import { joined, jsonPieces, LazyArray } from "./jsonWriter.js";
 import type { FileReport } from "./report.js";
 import type { Finding, Rule, Severity } from "./types.js";
 import { INFORMATION_URI, VERSION } from "./version.js";
@@ -125,46 +125,42 @@ function* results(
 }
 
 /**
- * Writes the SARIF of `formatSarif` to `write` a result at a time, byte for
- * byte the same, so a report of millions of findings is never one string and
- * its results are never one array.
+ * The SARIF of `formatSarif` as pieces of about 64 KB produced one at a time,
+ * byte for byte the same, so a report of millions of findings is never one
+ * string and its results are never one array.
  */
-export function writeSarifReport(
+export function sarifReportPieces(
   reports: readonly FileReport[],
   rules: readonly Rule[],
-  write: Sink,
-): void {
+): Generator<string> {
   const ruleIndex = new Map(rules.map((rule, index) => [rule.id, index]));
   const notifications = reports.flatMap(notification);
-  writeJson(
-    {
-      $schema: SARIF_SCHEMA,
-      version: "2.1.0",
-      runs: [
-        {
-          tool: {
-            driver: {
-              name: "geolint",
-              version: VERSION,
-              informationUri: INFORMATION_URI,
-              rules: rules.map(ruleDescriptor),
-            },
+  return jsonPieces({
+    $schema: SARIF_SCHEMA,
+    version: "2.1.0",
+    runs: [
+      {
+        tool: {
+          driver: {
+            name: "geolint",
+            version: VERSION,
+            informationUri: INFORMATION_URI,
+            rules: rules.map(ruleDescriptor),
           },
-          artifacts: reports.map(({ file }) => ({
-            location: { uri: toUri(file) },
-          })),
-          results: new LazyArray(() => results(reports, ruleIndex)),
-          invocations: [
-            {
-              executionSuccessful: notifications.length === 0,
-              toolExecutionNotifications: notifications,
-            },
-          ],
         },
-      ],
-    },
-    write,
-  );
+        artifacts: reports.map(({ file }) => ({
+          location: { uri: toUri(file) },
+        })),
+        results: new LazyArray(() => results(reports, ruleIndex)),
+        invocations: [
+          {
+            executionSuccessful: notifications.length === 0,
+            toolExecutionNotifications: notifications,
+          },
+        ],
+      },
+    ],
+  });
 }
 
 /**
@@ -173,11 +169,11 @@ export function writeSarifReport(
  * the confidence as a property) and an error notification for each input that
  * could not be read. Severity `info` becomes the SARIF level `note`. A string
  * is limited to about 536 million characters, which about 580,000 findings
- * reach; use `writeSarifReport` for more.
+ * reach; use `sarifReportPieces` for more.
  */
 export function formatSarif(
   reports: readonly FileReport[],
   rules: readonly Rule[],
 ): string {
-  return collected((write) => writeSarifReport(reports, rules, write));
+  return joined(sarifReportPieces(reports, rules));
 }
