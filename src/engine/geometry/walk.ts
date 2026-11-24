@@ -33,6 +33,20 @@ export interface LeafGeometry {
   readonly pointer: string;
 }
 
+/**
+ * What has been worked out for the feature read last. The rules run one feature
+ * at a time, so remembering a single feature gives every rule after the first a
+ * free read, and holds on to one feature at most, however large the file is.
+ */
+interface FeatureView {
+  readonly feature: object;
+  readonly leaves: readonly LeafGeometry[];
+  lines?: Map<LeafGeometry, readonly RunRef[]>;
+  rings?: Map<LeafGeometry, readonly RingRef[]>;
+}
+
+let lastView: FeatureView | undefined;
+
 function isLeafType(value: unknown): value is LeafType {
   return typeof value === "string" && LEAF_TYPES.has(value);
 }
@@ -72,14 +86,26 @@ function collect(
  * call this on any JSON value.
  *
  * Accepts a `Feature` (reads `geometry`) or a bare geometry object.
+ *
+ * The result for the feature asked about last is kept and shared by every
+ * caller, which is why it is `readonly`: the rules never change a feature and
+ * run one feature at a time, so the first rule to ask pays and the others reuse
+ * it. A different feature replaces the entry, so one feature is held at most.
+ * A value that is not an object is not cached. A feature must not be changed
+ * between reads: a changed feature has to be a new object (as `fixLeaves`
+ * returns), or the old result is served.
  */
-export function leafGeometries(feature: unknown): LeafGeometry[] {
-  const out: LeafGeometry[] = [];
+export function leafGeometries(feature: unknown): readonly LeafGeometry[] {
   if (!isObject(feature)) {
-    return out;
+    return [];
   }
+  if (lastView?.feature === feature) {
+    return lastView.leaves;
+  }
+  const out: LeafGeometry[] = [];
   const geometry = feature.type === "Feature" ? feature.geometry : feature;
   collect(geometry, geometryPointer(feature), 0, out);
+  lastView = { feature, leaves: out };
   return out;
 }
 
@@ -120,8 +146,7 @@ function readRun(value: unknown): Position[] | undefined {
   return value as Position[];
 }
 
-/** The lines of a `LineString` or `MultiLineString`; malformed lines are skipped. */
-export function linesOf(leaf: LeafGeometry): RunRef[] {
+function readLines(leaf: LeafGeometry): RunRef[] {
   const base = pointer(leaf.pointer, "coordinates");
   if (leaf.type === "LineString") {
     const positions = readRun(leaf.coordinates);
@@ -134,6 +159,24 @@ export function linesOf(leaf: LeafGeometry): RunRef[] {
     const positions = readRun(line);
     return positions ? [{ positions, pointer: pointer(base, index) }] : [];
   });
+}
+
+/**
+ * The lines of a `LineString` or `MultiLineString`; malformed lines are
+ * skipped. Shared like `leafGeometries`, for the leaves of the feature read last.
+ */
+export function linesOf(leaf: LeafGeometry): readonly RunRef[] {
+  const view = lastView;
+  const known = view?.lines?.get(leaf);
+  if (known !== undefined) {
+    return known;
+  }
+  const lines = readLines(leaf);
+  if (view) {
+    view.lines ??= new Map();
+    view.lines.set(leaf, lines);
+  }
+  return lines;
 }
 
 function ringsOfPolygon(value: unknown, base: string): RingRef[] {
@@ -155,8 +198,7 @@ function ringsOfPolygon(value: unknown, base: string): RingRef[] {
   });
 }
 
-/** The rings of a `Polygon` or `MultiPolygon`; malformed rings are skipped. */
-export function ringsOf(leaf: LeafGeometry): RingRef[] {
+function readRings(leaf: LeafGeometry): RingRef[] {
   const base = pointer(leaf.pointer, "coordinates");
   if (leaf.type === "Polygon") {
     return ringsOfPolygon(leaf.coordinates, base);
@@ -167,6 +209,24 @@ export function ringsOf(leaf: LeafGeometry): RingRef[] {
   return leaf.coordinates.flatMap((polygon: unknown, index: number) =>
     ringsOfPolygon(polygon, pointer(base, index)),
   );
+}
+
+/**
+ * The rings of a `Polygon` or `MultiPolygon`; malformed rings are skipped.
+ * Shared like `leafGeometries`, for the leaves of the feature read last.
+ */
+export function ringsOf(leaf: LeafGeometry): readonly RingRef[] {
+  const view = lastView;
+  const known = view?.rings?.get(leaf);
+  if (known !== undefined) {
+    return known;
+  }
+  const rings = readRings(leaf);
+  if (view) {
+    view.rings ??= new Map();
+    view.rings.set(leaf, rings);
+  }
+  return rings;
 }
 
 /** The readable positions of a leaf geometry that pass a test, and where the first is. */
