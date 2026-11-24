@@ -28,6 +28,14 @@ describe("writeJson", () => {
     ],
     ["a deep structure", { a: { b: { c: { d: { e: [1, { f: [2, 3] }] } } } } }],
     ["an array of objects", [{ a: 1 }, { b: [1, 2] }, []]],
+    [
+      "a Date and an object with toJSON",
+      { when: new Date(0), custom: { toJSON: () => [1, 2] } },
+    ],
+    [
+      "function and symbol members, which are left out",
+      { a: () => 1, b: Symbol("x"), c: 1 },
+    ],
     ["unicode", { 名前: "😀 naïve", list: ["é", " "] }],
   ])("writes %s exactly as JSON.stringify does", (_name, value) => {
     expect(written(value).text).toBe(reference(value));
@@ -52,6 +60,15 @@ describe("writeJson", () => {
 
     expect(written(value).text).toBe(
       reference({ before: 1, list: [...items()], after: [] }),
+    );
+  });
+
+  it("writes a lazy array that sits too deep to expand as the array it stands for", () => {
+    const items = () => [1, { a: 2 }];
+    const value = { a: { b: { c: { d: { e: new LazyArray(items) } } } } };
+
+    expect(written(value).text).toBe(
+      reference({ a: { b: { c: { d: { e: [1, { a: 2 }] } } } } }),
     );
   });
 

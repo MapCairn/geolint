@@ -25,6 +25,11 @@ const FLUSH_AT_CHARACTERS = 64 * 1024;
  */
 export class LazyArray {
   constructor(readonly members: () => Iterable<unknown>) {}
+
+  /** Used when one sits too deep to be written a member at a time, so it is still the array it stands for. */
+  toJSON(): unknown[] {
+    return [...this.members()];
+  }
 }
 
 /** Gathers text and hands it to a sink in pieces of about 64 KB. Call `flush` at the end. */
@@ -73,6 +78,19 @@ function writeMembers(
   out.add(first ? "[]" : `\n${padding(level)}]`);
 }
 
+/** Whether `JSON.stringify` writes an object member with this value: it leaves out `undefined`, functions and symbols. */
+function isWritten(value: unknown): boolean {
+  return (
+    value !== undefined &&
+    typeof value !== "function" &&
+    typeof value !== "symbol"
+  );
+}
+
+function hasToJson(value: unknown): boolean {
+  return isObject(value) && typeof value.toJSON === "function";
+}
+
 function writeProperties(
   object: Readonly<Record<string, unknown>>,
   depth: number,
@@ -81,7 +99,7 @@ function writeProperties(
 ): void {
   let first = true;
   for (const [name, value] of Object.entries(object)) {
-    if (value === undefined) {
+    if (!isWritten(value)) {
       continue;
     }
     out.add(first ? "{\n" : ",\n");
@@ -100,6 +118,8 @@ function writeValue(
 ): void {
   if (value instanceof LazyArray) {
     writeMembers(value.members(), depth, level, out);
+  } else if (hasToJson(value)) {
+    out.add(wholeValue(value, level));
   } else if (depth < EXPANDED_DEPTH && Array.isArray(value)) {
     writeMembers(value, depth, level, out);
   } else if (depth < EXPANDED_DEPTH && isObject(value)) {
