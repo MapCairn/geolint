@@ -4,10 +4,9 @@ Most work needs only a GitHub issue with its design notes and task list. A plan 
 
 A plan gets its own pull request, reviewed before any code is written, only when the work will not start straight away. When it starts immediately, the plan file and its first step of implementation land in one pull request instead. The `plan-change` skill has the procedure.
 
-Open plans:
-
-- [0002: Stream findings out per feature, and share one view of each feature between rules](0002-streaming-findings-and-shared-feature-view.md), tracking issue [#12](https://github.com/MapCairn/geolint/issues/12), in progress.
+Open plans: none.
 
 Done plans, kept as the design record:
 
 - [0001: geolint, a GeoJSON linter in its own Apache-2.0 package](0001-geolint.md), the design geolint was built to, tracking issue [#2](https://github.com/MapCairn/geolint/issues/2) (closed).
+- [0002: Stream findings out per feature, and share one view of each feature between rules](0002-streaming-findings-and-shared-feature-view.md), tracking issue [#12](https://github.com/MapCairn/geolint/issues/12), done: the shared feature view is built, streaming findings out of the engine is not (the measurement showed findings are small; the output is the cost, see #55 and #56).

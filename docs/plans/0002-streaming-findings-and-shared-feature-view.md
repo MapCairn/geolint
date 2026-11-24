@@ -1,6 +1,6 @@
 # 0002: Stream findings out per feature, and share one view of each feature between rules
 
-Status: in progress. Tracking issue: [#12](https://github.com/MapCairn/geolint/issues/12). It carries out two tasks of [#3](https://github.com/MapCairn/geolint/issues/3).
+Status: done. Tracking issue: [#12](https://github.com/MapCairn/geolint/issues/12). It carries out two tasks of [#3](https://github.com/MapCairn/geolint/issues/3).
 
 ## Goal
 
@@ -69,6 +69,14 @@ The shared view relies on three things that already hold: a rule never mutates t
 6. Counters for the summary and exit code, and removal of the string-building path from the command.
 
 Steps 3 to 6 each build and pass on their own; 4 and 5 can swap.
+
+## Outcome
+
+Decided on 2026-11-24 from the step 1 measurement (#52, `bench/findings.mjs`).
+
+- **Part B is built** (#53): the rules share one view of the feature read last. It took the 50 MB benchmark from 0.83 s to 0.67 s with peak memory unchanged. Memoising every feature in a `WeakMap`, as first designed, was no faster and raised peak memory, so one entry is kept.
+- **Part A, streaming findings out of the engine (steps 3 and 6), is not built.** A finding keeps about 170 to 200 bytes alive, so a file of 721,898 findings holds 122 MB in its report. That is small, and the plan said a small figure stops these steps. The decisions on document-level order and JSON key order (decided above) were needed only for streaming, so they do not take effect.
+- **What the measurement found instead** is that building the output is the cost, not holding the findings: text takes about 250 characters for each finding, JSON about 305 and SARIF about 930. `formatText` ran out of memory at a 4 GB heap on 721,898 findings because `printable` builds strings a character at a time (#55), and `formatSarif` throws `RangeError: Invalid string length` from about 580,000 findings (#56). Writers that take a sink and write from the finished report (steps 4 and 5 without `lintStream`) are the option #56 weighs.
 
 ## Documents to update
 
