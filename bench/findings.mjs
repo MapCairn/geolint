@@ -60,7 +60,13 @@ try {
     ["sarif", () => formatSarif(reports, rules)],
   ]) {
     process.stderr.write(`formatting ${name}\n`);
-    let output = format();
+    let output;
+    try {
+      output = format();
+    } catch (error) {
+      outputs[name] = { error: `${error.name}: ${error.message}` };
+      continue;
+    }
     const held = liveHeapBytes();
     outputs[name] = {
       characters: output.length,
