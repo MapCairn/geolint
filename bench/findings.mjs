@@ -28,8 +28,16 @@ const collectGarbage = globalThis.gc;
 
 const dist = (relative) =>
   import(pathToFileURL(path.resolve(import.meta.dirname, relative)).href);
-const { lintBytes, formatText, formatJson, formatSarif, rules } =
-  await dist("../dist/index.js");
+const {
+  lintBytes,
+  formatText,
+  formatJson,
+  formatSarif,
+  writeTextReport,
+  writeJsonReport,
+  writeSarifReport,
+  rules,
+} = await dist("../dist/index.js");
 const { fileChunks } = await dist("../dist/node/index.js");
 
 function liveHeapBytes() {
@@ -54,24 +62,39 @@ try {
 
   const outputs = {};
   let previous = afterReport;
-  for (const [name, format] of [
-    ["text", () => formatText(reports)],
-    ["json", () => formatJson(reports)],
-    ["sarif", () => formatSarif(reports, rules)],
+  for (const [name, format, stream] of [
+    [
+      "text",
+      () => formatText(reports),
+      (sink) => writeTextReport(reports, sink),
+    ],
+    [
+      "json",
+      () => formatJson(reports),
+      (sink) => writeJsonReport(reports, sink),
+    ],
+    [
+      "sarif",
+      () => formatSarif(reports, rules),
+      (sink) => writeSarifReport(reports, rules, sink),
+    ],
   ]) {
     process.stderr.write(`formatting ${name}\n`);
+    let streamed = 0;
+    stream((piece) => {
+      streamed += piece.length;
+    });
+    outputs[name] = { streamedCharacters: streamed };
     let output;
     try {
       output = format();
     } catch (error) {
-      outputs[name] = { error: `${error.name}: ${error.message}` };
+      outputs[name].error = `${error.name}: ${error.message}`;
       continue;
     }
     const held = liveHeapBytes();
-    outputs[name] = {
-      characters: output.length,
-      heapBytesHeld: held - previous,
-    };
+    outputs[name].characters = output.length;
+    outputs[name].heapBytesHeld = held - previous;
     output = undefined;
     previous = liveHeapBytes();
   }

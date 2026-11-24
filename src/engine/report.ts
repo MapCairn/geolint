@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright MapCairn contributors
+import { collected, Gatherer, type Sink, writeJson } from "./jsonWriter.js";
 import type { LintReport } from "./lint.js";
 import type { Finding, InputError, Severity } from "./types.js";
 
@@ -124,43 +125,69 @@ function inputErrorLine(file: string, error: InputError): string {
 }
 
 /**
- * Plain text, one line for each finding and a summary line, the order that the
- * reports were given in. A line has the file, the severity, the rule id, the
- * confidence, the JSON pointer and the message, so it greps well.
+ * Writes the plain text of `formatText` to `write` a piece at a time, so a
+ * report of millions of findings is never one string.
  */
-export function formatText(reports: readonly FileReport[]): string {
-  const lines: string[] = [];
+export function writeTextReport(
+  reports: readonly FileReport[],
+  write: Sink,
+): void {
+  const out = new Gatherer(write);
   for (const { file, report } of reports) {
     for (const finding of report.findings) {
-      lines.push(findingLine(file, finding));
+      out.add(`${findingLine(file, finding)}\n`);
     }
     if (report.inputError) {
-      lines.push(inputErrorLine(file, report.inputError));
+      out.add(`${inputErrorLine(file, report.inputError)}\n`);
     }
   }
   const summary = summarise(reports);
   const unreadable =
     summary.unreadable > 0 ? `, ${summary.unreadable} unreadable` : "";
-  lines.push(
-    `${plural(summary.errors, "error")}, ${plural(summary.warnings, "warning")}, ${summary.infos} info${unreadable} in ${plural(summary.files, "file")}.`,
+  out.add(
+    `${plural(summary.errors, "error")}, ${plural(summary.warnings, "warning")}, ${summary.infos} info${unreadable} in ${plural(summary.files, "file")}.\n`,
   );
-  return `${lines.join("\n")}\n`;
+  out.flush();
+}
+
+/**
+ * Plain text, one line for each finding and a summary line, the order that the
+ * reports were given in. A line has the file, the severity, the rule id, the
+ * confidence, the JSON pointer and the message, so it greps well. A string is
+ * limited to about 536 million characters; use `writeTextReport` for more.
+ */
+export function formatText(reports: readonly FileReport[]): string {
+  return collected((write) => writeTextReport(reports, write));
+}
+
+/**
+ * Writes the JSON of `formatJson` to `write` a piece at a time, byte for
+ * byte the same, so a report of millions of findings is never one string.
+ */
+export function writeJsonReport(
+  reports: readonly FileReport[],
+  write: Sink,
+): void {
+  writeJson(
+    {
+      version: 1,
+      files: reports.map(({ file, report }) => ({
+        file,
+        featureCount: report.featureCount,
+        findings: report.findings,
+        inputError: report.inputError ?? null,
+      })),
+      summary: summarise(reports),
+    },
+    write,
+  );
 }
 
 /**
  * Machine-readable JSON with a version number, one entry for each file and a
- * summary. The shape is the package's public output format.
+ * summary. The shape is the package's public output format. A string is
+ * limited to about 536 million characters; use `writeJsonReport` for more.
  */
 export function formatJson(reports: readonly FileReport[]): string {
-  const body = {
-    version: 1,
-    files: reports.map(({ file, report }) => ({
-      file,
-      featureCount: report.featureCount,
-      findings: report.findings,
-      inputError: report.inputError ?? null,
-    })),
-    summary: summarise(reports),
-  };
-  return `${JSON.stringify(body, null, 2)}\n`;
+  return collected((write) => writeJsonReport(reports, write));
 }

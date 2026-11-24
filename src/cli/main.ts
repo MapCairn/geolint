@@ -14,11 +14,11 @@ import {
   EXIT,
   exitCodeFor,
   type FileReport,
-  formatJson,
-  formatText,
+  writeJsonReport,
+  writeTextReport,
 } from "../engine/report.js";
 import { rules } from "../engine/rules/index.js";
-import { formatSarif } from "../engine/sarif.js";
+import { writeSarifReport } from "../engine/sarif.js";
 import { expandInputs, NoMatchError, STDIN } from "../node/files.js";
 import { planFixInputs } from "../node/fixFile.js";
 import { type FileTask, lintFile } from "../node/lintFile.js";
@@ -193,17 +193,22 @@ async function lintAll(
   return reports;
 }
 
-function render(
+/** Writes the report in the chosen format a piece at a time, so a very large one is never one string. */
+function writeReport(
   format: Parsed["format"],
   reports: readonly FileReport[],
-): string {
+  write: (text: string) => void,
+): void {
   switch (format) {
     case "json":
-      return formatJson(reports);
+      writeJsonReport(reports, write);
+      break;
     case "sarif":
-      return formatSarif(reports, rules);
+      writeSarifReport(reports, rules, write);
+      break;
     case "text":
-      return formatText(reports);
+      writeTextReport(reports, write);
+      break;
   }
 }
 
@@ -285,7 +290,7 @@ export async function main(
     for (const note of reports.flatMap((entry) => entry.notes ?? [])) {
       io.stderr.write(`${note}\n`);
     }
-    io.stdout.write(render(parsed.format, reports));
+    writeReport(parsed.format, reports, (text) => io.stdout.write(text));
     return exitCodeFor(reports);
   } catch (error) {
     return reportFailure(error, io);
