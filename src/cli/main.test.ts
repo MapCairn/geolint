@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright MapCairn contributors
+
+import { EventEmitter } from "node:events";
 import {
   mkdirSync,
   mkdtempSync,
@@ -58,6 +60,24 @@ const BOWTIE = collection({
   },
 });
 
+/** A stream that is always full: each write returns false and drains on the next turn of the event loop. */
+class FullStream extends EventEmitter {
+  readonly writes: string[] = [];
+  overlapped = false;
+  private waiting = false;
+
+  write(text: string): boolean {
+    this.overlapped ||= this.waiting;
+    this.writes.push(text);
+    this.waiting = true;
+    setImmediate(() => {
+      this.waiting = false;
+      this.emit("drain");
+    });
+    return false;
+  }
+}
+
 /** A worker script that does not exist: the tests that lint several files in one go use `--jobs 1`, or name their own worker. */
 const NO_WORKER = new URL("./no-worker.mjs", import.meta.url);
 
@@ -93,6 +113,44 @@ describe("the command", () => {
     });
     return { code, out, err };
   }
+
+  it("waits for a full standard output to drain before it writes more", async () => {
+    const many = collection(
+      ...Array.from({ length: 700 }, (_, index) => ({
+        type: "Feature",
+        properties: { index },
+        geometry: {
+          type: "Polygon",
+          coordinates: [
+            [
+              [0, 0],
+              [0, 1],
+              [1, 1],
+              [1, 0],
+              [0, 0],
+            ],
+          ],
+        },
+      })),
+    );
+    const stdout = new FullStream();
+
+    const code = await main(["-"], {
+      stdout,
+      stderr: { write: () => undefined },
+      stdin: () =>
+        (async function* () {
+          yield new TextEncoder().encode(many);
+        })(),
+      cwd: dir,
+      workerUrl: NO_WORKER,
+    });
+
+    expect(code).toBe(1);
+    expect(stdout.writes.length).toBeGreaterThan(1);
+    expect(stdout.overlapped).toBe(false);
+    expect(stdout.writes.join("").split("\n").length).toBeGreaterThan(700);
+  });
 
   beforeAll(() => {
     dir = mkdtempSync(path.join(tmpdir(), "geolint-cli-"));

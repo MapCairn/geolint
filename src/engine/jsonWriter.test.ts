@@ -2,11 +2,10 @@
 // Copyright MapCairn contributors
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import { LazyArray, writeJson } from "./jsonWriter.js";
+import { jsonPieces, LazyArray } from "./jsonWriter.js";
 
 function written(value: unknown): { text: string; calls: number } {
-  const pieces: string[] = [];
-  writeJson(value, (piece) => pieces.push(piece));
+  const pieces = [...jsonPieces(value)];
   return { text: pieces.join(""), calls: pieces.length };
 }
 
@@ -77,7 +76,7 @@ describe("writeJson", () => {
     expect(written(value).text).toBe(reference({ list: [] }));
   });
 
-  it("hands the sink pieces of at most about 64 KB, however long the document is", () => {
+  it("gives pieces of about 64 KB, however long the document is", () => {
     const message = "x".repeat(1000);
     const value = {
       findings: Array.from({ length: 5000 }, () => ({ message })),

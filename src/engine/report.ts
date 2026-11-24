@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright MapCairn contributors
-import { collected, Gatherer, type Sink, writeJson } from "./jsonWriter.js";
+import { batched, joined, jsonPieces } from "./jsonWriter.js";
 import type { LintReport } from "./lint.js";
 import type { Finding, InputError, Severity } from "./types.js";
 
@@ -124,70 +124,67 @@ function inputErrorLine(file: string, error: InputError): string {
   return `${printable(file)}: error invalid-input could not be read${where}: ${printable(error.message)}`;
 }
 
-/**
- * Writes the plain text of `formatText` to `write` a piece at a time, so a
- * report of millions of findings is never one string.
- */
-export function writeTextReport(
-  reports: readonly FileReport[],
-  write: Sink,
-): void {
-  const out = new Gatherer(write);
+function* textLines(reports: readonly FileReport[]): Generator<string> {
   for (const { file, report } of reports) {
     for (const finding of report.findings) {
-      out.add(`${findingLine(file, finding)}\n`);
+      yield `${findingLine(file, finding)}\n`;
     }
     if (report.inputError) {
-      out.add(`${inputErrorLine(file, report.inputError)}\n`);
+      yield `${inputErrorLine(file, report.inputError)}\n`;
     }
   }
   const summary = summarise(reports);
   const unreadable =
     summary.unreadable > 0 ? `, ${summary.unreadable} unreadable` : "";
-  out.add(
-    `${plural(summary.errors, "error")}, ${plural(summary.warnings, "warning")}, ${summary.infos} info${unreadable} in ${plural(summary.files, "file")}.\n`,
-  );
-  out.flush();
+  yield `${plural(summary.errors, "error")}, ${plural(summary.warnings, "warning")}, ${summary.infos} info${unreadable} in ${plural(summary.files, "file")}.\n`;
+}
+
+/**
+ * The plain text of `formatText` as pieces of about 64 KB produced one at a
+ * time, so a report of millions of findings is never one string and a caller
+ * that waits between pieces holds only one.
+ */
+export function textReportPieces(
+  reports: readonly FileReport[],
+): Generator<string> {
+  return batched(textLines(reports));
 }
 
 /**
  * Plain text, one line for each finding and a summary line, the order that the
  * reports were given in. A line has the file, the severity, the rule id, the
  * confidence, the JSON pointer and the message, so it greps well. A string is
- * limited to about 536 million characters; use `writeTextReport` for more.
+ * limited to about 536 million characters; use `textReportPieces` for more.
  */
 export function formatText(reports: readonly FileReport[]): string {
-  return collected((write) => writeTextReport(reports, write));
+  return joined(textReportPieces(reports));
 }
 
 /**
- * Writes the JSON of `formatJson` to `write` a piece at a time, byte for
- * byte the same, so a report of millions of findings is never one string.
+ * The JSON of `formatJson` as pieces of about 64 KB produced one at a time,
+ * byte for byte the same, so a report of millions of findings is never one
+ * string and a caller that waits between pieces holds only one.
  */
-export function writeJsonReport(
+export function jsonReportPieces(
   reports: readonly FileReport[],
-  write: Sink,
-): void {
-  writeJson(
-    {
-      version: 1,
-      files: reports.map(({ file, report }) => ({
-        file,
-        featureCount: report.featureCount,
-        findings: report.findings,
-        inputError: report.inputError ?? null,
-      })),
-      summary: summarise(reports),
-    },
-    write,
-  );
+): Generator<string> {
+  return jsonPieces({
+    version: 1,
+    files: reports.map(({ file, report }) => ({
+      file,
+      featureCount: report.featureCount,
+      findings: report.findings,
+      inputError: report.inputError ?? null,
+    })),
+    summary: summarise(reports),
+  });
 }
 
 /**
  * Machine-readable JSON with a version number, one entry for each file and a
  * summary. The shape is the package's public output format. A string is
- * limited to about 536 million characters; use `writeJsonReport` for more.
+ * limited to about 536 million characters; use `jsonReportPieces` for more.
  */
 export function formatJson(reports: readonly FileReport[]): string {
-  return collected((write) => writeJsonReport(reports, write));
+  return joined(jsonReportPieces(reports));
 }
