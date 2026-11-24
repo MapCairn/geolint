@@ -14,6 +14,7 @@ export {
   fixFeature,
   MAX_FIX_PASSES,
 } from "./engine/fix.js";
+export type { Sink } from "./engine/jsonWriter.js";
 export {
   activeRules,
   buildContext,
@@ -41,9 +42,11 @@ export {
   formatText,
   type Summary,
   summarise,
+  writeJsonReport,
+  writeTextReport,
 } from "./engine/report.js";
 export { rules } from "./engine/rules/index.js";
-export { formatSarif } from "./engine/sarif.js";
+export { formatSarif, writeSarifReport } from "./engine/sarif.js";
 export type {
   Confidence,
   CountryIndex,
