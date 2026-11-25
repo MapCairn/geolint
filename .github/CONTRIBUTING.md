@@ -1,6 +1,6 @@
 # Contributing to geolint
 
-geolint is a GeoJSON linter: a command and a library. Contributions to the rules, the command, the library, performance and documentation are welcome. Read [`README.md`](README.md) and follow [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md). [`GOVERNANCE.md`](GOVERNANCE.md) says who decides what and how, and [`ROADMAP.md`](ROADMAP.md) says what the project intends to do and what it will not.
+geolint is a GeoJSON linter: a command and a library. Contributions to the rules, the command, the library, performance and documentation are welcome. Read [`README.md`](../README.md) and follow [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md). [`GOVERNANCE.md`](GOVERNANCE.md) says who decides what and how, and [`ROADMAP.md`](../ROADMAP.md) says what the project intends to do and what it will not.
 
 ## Getting set up
 
@@ -34,7 +34,7 @@ The pre-commit hook runs Biome, dependency-cruiser, the licence header check, th
 - `fixtures/<rule-id>/`: a passing and a failing input for each rule, run through the whole engine by one test.
 - `scripts/`: the country outline build, the smoke test, and the repository tooling with its tests in `scripts/test`.
 
-`npm run lint` enforces the boundaries: nothing imports MapCairn code, nothing in `src` imports a file outside it, and the engine stays free of Node. [`docs/plans/0001-geolint.md`](docs/plans/0001-geolint.md) is the design.
+`npm run lint` enforces the boundaries: nothing imports MapCairn code, nothing in `src` imports a file outside it, and the engine stays free of Node. [`docs/plans/0001-geolint.md`](../docs/plans/0001-geolint.md) is the design.
 
 A new rule is one file in `src/engine/rules`, one line in the registry, a passing and a failing fixture, unit tests for its edge cases, its row in the README's rule table and its limits in the README's "Failure modes and limitations". A rule that guesses says how sure it is through its confidence.
 
@@ -51,16 +51,16 @@ A new rule is one file in `src/engine/rules`, one line in the registry, a passin
 
 The coding standard is what the tools enforce, not a separate guide.
 
-- **Formatting and linting:** [Biome](https://biomejs.dev), configured in [`biome.jsonc`](biome.jsonc), formats and lints the code with the recommended rules plus the project's complexity, promise, switch, `console`, nested ternary, shadowing, `interface`, readonly and import cycle rules, and the engine's ban on Node globals. It also formats Markdown and YAML, and the tool's layout wins. Warnings fail the build (`--error-on-warnings`). Run `npm run format` to format and `npm run lint` to check. The skill and agent files in `.claude` and their generated copies are left out of the formatter.
+- **Formatting and linting:** [Biome](https://biomejs.dev), configured in [`biome.jsonc`](../biome.jsonc), formats and lints the code with the recommended rules plus the project's complexity, promise, switch, `console`, nested ternary, shadowing, `interface`, readonly and import cycle rules, and the engine's ban on Node globals. It also formats Markdown and YAML, and the tool's layout wins. Warnings fail the build (`--error-on-warnings`). Run `npm run format` to format and `npm run lint` to check. The skill and agent files in `.claude` and their generated copies are left out of the formatter.
 - **Licence header:** every source file starts with `// SPDX-License-Identifier: Apache-2.0` and `// Copyright MapCairn contributors`. `npm run licence:write` adds the two lines to a new file, and `npm run lint` fails without them.
-- **TypeScript:** the strict settings in [`tsconfig.json`](tsconfig.json): `strict`, `noUncheckedIndexedAccess` and `forceConsistentCasingInFileNames`. Run `npm run typecheck`.
+- **TypeScript:** the strict settings in [`tsconfig.json`](../tsconfig.json): `strict`, `noUncheckedIndexedAccess` and `forceConsistentCasingInFileNames`. Run `npm run typecheck`.
 - **Enforcement:** the hooks and CI run the checks above on every pull request, so a change that breaks the standard cannot merge.
 
 ## Dependencies
 
 geolint keeps its production dependencies few and permissive (MIT, BSD, ISC, Apache-2.0, Unlicense, CC0, 0BSD). `npm run lint` fails if the installed production tree holds any other licence. A new runtime dependency is the maintainer's decision: propose it in an issue, with why it is needed and its licence. Do not edit `src/testing/licences.ts` to get a change through.
 
-After changing a manifest, run a real `npm install` and include the lockfile. Do not use `--package-lock-only` as the normal update procedure. Write third-party ranges as caret ranges (`^1.2.3`), pin a prerelease exactly, and never install a version published less than 3 days ago (`.npmrc` sets `min-release-age=3`). Prove a lockfile change with one real `npm ci --ignore-scripts` under npm 11 in a disposable clone. See [`AGENTS.md`](AGENTS.md) for more.
+After changing a manifest, run a real `npm install` and include the lockfile. Do not use `--package-lock-only` as the normal update procedure. Write third-party ranges as caret ranges (`^1.2.3`), pin a prerelease exactly, and never install a version published less than 3 days ago (`.npmrc` sets `min-release-age=3`). Prove a lockfile change with one real `npm ci --ignore-scripts` under npm 11 in a disposable clone. See [`AGENTS.md`](../AGENTS.md) for more.
 
 ## Changing a workflow
 
@@ -68,7 +68,7 @@ Pin every action by full commit SHA with its release in a comment, and keep each
 
 ## Pull requests
 
-Work is tracked in [GitHub Issues](https://github.com/MapCairn/geolint/issues), and every change reaches `main` through a pull request. Open an issue first for large changes, use the bug and feature forms, and link the issue from the pull request (`Fixes #123`). Branch from `main`, name the branch for the change (`feat/...`, `fix/...`, `docs/...`), use a Conventional Commit as the pull request title, and keep each pull request to one logical change and explain why it is needed. A pull request is squash-merged with the title as the subject and an explicit body. Run the checks above and report anything skipped or failing. If you use a coding agent, whichever one, the same rules apply: it follows [`AGENTS.md`](AGENTS.md). The project skills (`create-issue`, `plan-change`, `split-plan`, `pick-up-issue`, `land-pr`, `delete-first`, `design-tests`, `review-tests`, `review-docs`, `review-security` and `triage-dependency-pr`) walk through this with the `gh` CLI, and the `implementer`, `fresh-eyes-reviewer`, `lean-reviewer`, `test-reviewer` and `security-reviewer` agents wrap them. [`docs/guides/working-with-agents.md`](docs/guides/working-with-agents.md) says what each tool reads. Edit skills and agents under `.claude/` and run `npm run agents:sync`; `npm run lint` fails when the copies for other tools are stale.
+Work is tracked in [GitHub Issues](https://github.com/MapCairn/geolint/issues), and every change reaches `main` through a pull request. Open an issue first for large changes, use the bug and feature forms, and link the issue from the pull request (`Fixes #123`). Branch from `main`, name the branch for the change (`feat/...`, `fix/...`, `docs/...`), use a Conventional Commit as the pull request title, and keep each pull request to one logical change and explain why it is needed. A pull request is squash-merged with the title as the subject and an explicit body. Run the checks above and report anything skipped or failing. If you use a coding agent, whichever one, the same rules apply: it follows [`AGENTS.md`](../AGENTS.md). The project skills (`create-issue`, `plan-change`, `split-plan`, `pick-up-issue`, `land-pr`, `delete-first`, `design-tests`, `review-tests`, `review-docs`, `review-security` and `triage-dependency-pr`) walk through this with the `gh` CLI, and the `implementer`, `fresh-eyes-reviewer`, `lean-reviewer`, `test-reviewer` and `security-reviewer` agents wrap them. [`docs/guides/working-with-agents.md`](../docs/guides/working-with-agents.md) says what each tool reads. Edit skills and agents under `.claude/` and run `npm run agents:sync`; `npm run lint` fails when the copies for other tools are stale.
 
 Publishing to npm, tags and releases are the maintainer's decision; do not add a workflow that publishes.
 
@@ -81,7 +81,7 @@ The maintainers use AI coding agents. They treat what you write, in an issue, a 
 Before a pull request is merged:
 
 - The required checks must pass. The repository ruleset names them. `build` runs lint, typecheck, the tests with the coverage floors and the build, and `pack and install` runs the smoke test.
-- The `CLA` check must show that the author and every commit author have agreed to [`CLA.md`](CLA.md).
+- The `CLA` check must show that the author and every commit author have agreed to [`CLA.md`](../CLA.md).
 - The maintainer reads the diff and the description, and checks the items in the pull request template.
 - A new feature or a bug fix has tests, written first. A change that adds or changes behaviour is not accepted without them, unless the pull request says why none are needed, for example a documentation change.
 - Review threads are resolved. A change can be declined, or sent back for changes, with a reason.
@@ -90,10 +90,10 @@ The project has one maintainer, so the maintainer's own pull requests are checke
 
 ## Security and licence
 
-Report suspected vulnerabilities privately through [`SECURITY.md`](SECURITY.md). geolint is licensed under [Apache-2.0](LICENSE), and a contribution is licensed under Apache-2.0 too (inbound equals outbound, as section 5 of that licence provides).
+Report suspected vulnerabilities privately through [`SECURITY.md`](SECURITY.md). geolint is licensed under [Apache-2.0](../LICENSE), and a contribution is licensed under Apache-2.0 too (inbound equals outbound, as section 5 of that licence provides).
 
 ### Contributor licence agreement
 
-You keep the copyright in what you contribute, and you agree to [`CLA.md`](CLA.md). Add the comment given at the end of that file to your first pull request, from your own account and with the sentence on a line of its own. A pull request is not merged until it is there.
+You keep the copyright in what you contribute, and you agree to [`CLA.md`](../CLA.md). Add the comment given at the end of that file to your first pull request, from your own account and with the sentence on a line of its own. A pull request is not merged until it is there.
 
 The `CLA` workflow (`.github/workflows/cla.yml`) checks this on every pull request. It needs an agreement from the pull request author and from every commit author, so commit with an email address linked to your GitHub account, or the check cannot find you. Repository administrators and bots such as Dependabot are exempt. The `CLA` status turns green shortly after the comment, and your agreement is recorded in `signatures.json` on the `cla-signatures` branch, so you only comment once. Type or paste the sentence as its own comment: a quote reply to the bot's comment does not count, and nor does a sentence inside a code block. GitHub gives Dependabot's runs a read-only token, so Dependabot pull requests get no `CLA` status, and the run ends with a notice instead of a failure. For that reason `CLA` must not be made a required status on `main` until Dependabot pull requests are handled, for example by a ruleset bypass for Dependabot or a different required-check design. The decision logic is in `scripts/cla`, with its tests in `scripts/test`, and it runs only from the default branch, never from a pull request's own code.

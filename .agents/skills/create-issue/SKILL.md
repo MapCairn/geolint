@@ -15,7 +15,7 @@ Issues are how geolint tracks work. They are public, so write plain project fact
    `gh issue list --repo MapCairn/geolint --state all --search "<key words>" --limit 20`
    (Always name the repository with `--repo MapCairn/geolint`: in a clone of a fork the default is the fork, which has no issues.)
    If one exists, comment on it with the new facts instead of filing another.
-4. Read `ROADMAP.md` if the idea might be something the project has said it will not do. Adding a runtime dependency or a dataset, publishing, or anything that changes `SECURITY.md`, the licence, `NOTICE` or `CLA.md` is the maintainer's decision: say so in the issue and do not start the work.
+4. Read `ROADMAP.md` if the idea might be something the project has said it will not do. Adding a runtime dependency or a dataset, publishing, or anything that changes `.github/SECURITY.md`, the licence, `NOTICE` or `CLA.md` is the maintainer's decision: say so in the issue and do not start the work.
 
 ## Choose the kind
 

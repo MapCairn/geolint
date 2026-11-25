@@ -13,7 +13,10 @@ const workflow = readFileSync(
   path.join(REPO, ".github/workflows/cla.yml"),
   "utf8",
 );
-const contributing = readFileSync(path.join(REPO, "CONTRIBUTING.md"), "utf8");
+const contributing = readFileSync(
+  path.join(REPO, ".github/CONTRIBUTING.md"),
+  "utf8",
+);
 
 /** Lines of the workflow with comments removed, so checks see only what runs. */
 const code = workflow
@@ -110,7 +113,7 @@ describe(".github/workflows/cla.yml", () => {
     expect(code).not.toMatch(/workflow_run|workflow_dispatch/);
   });
 
-  it("warns, in its header and in CONTRIBUTING.md, that CLA must not be required yet", () => {
+  it("warns, in its header and in .github/CONTRIBUTING.md, that CLA must not be required yet", () => {
     expect(workflow).toMatch(/must not be made a required status/i);
     expect(contributing).toMatch(/must not be made a required/i);
     expect(contributing).toMatch(/Dependabot/);

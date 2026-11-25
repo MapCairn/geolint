@@ -200,8 +200,8 @@ npm run bench             # the benchmark; run the build first
 npm run bench:rules
 ```
 
-Each rule has a passing and a failing fixture in `fixtures/<rule-id>/`, which one test runs through the whole engine. [`CONTRIBUTING.md`](CONTRIBUTING.md) says how to send a change, [`AGENTS.md`](AGENTS.md) holds the working rules for people and coding agents, [`ATTRIBUTIONS.md`](ATTRIBUTIONS.md) has the data and software credits, [`ROADMAP.md`](ROADMAP.md) says what is planned and what is not, and [`docs/plans/0001-geolint.md`](docs/plans/0001-geolint.md) is the design.
+Each rule has a passing and a failing fixture in `fixtures/<rule-id>/`, which one test runs through the whole engine. [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) says how to send a change, [`AGENTS.md`](AGENTS.md) holds the working rules for people and coding agents, [`ATTRIBUTIONS.md`](ATTRIBUTIONS.md) has the data and software credits, [`ROADMAP.md`](ROADMAP.md) says what is planned and what is not, and [`docs/plans/0001-geolint.md`](docs/plans/0001-geolint.md) is the design.
 
 ## Licence
 
-Apache-2.0. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE). Contributions are licensed under Apache-2.0 too, and contributors agree to [`CLA.md`](CLA.md). Report a vulnerability privately as [`SECURITY.md`](SECURITY.md) says.
+Apache-2.0. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE). Contributions are licensed under Apache-2.0 too, and contributors agree to [`CLA.md`](CLA.md). Report a vulnerability privately as [`.github/SECURITY.md`](.github/SECURITY.md) says.

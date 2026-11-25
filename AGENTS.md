@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Working rules for anyone, human or AI, who changes the code in this repository. New here? Read `README.md` for what geolint is and `CONTRIBUTING.md` for how to send a change; this file is the detail behind both. Every coding tool follows this file, whichever it is: `CLAUDE.md` imports it with `@AGENTS.md` and adds only Claude Code specifics, and `docs/guides/working-with-agents.md` says what each tool reads. The design, and the reasons behind the rules below, are in `docs/plans/0001-geolint.md`.
+Working rules for anyone, human or AI, who changes the code in this repository. New here? Read `README.md` for what geolint is and `.github/CONTRIBUTING.md` for how to send a change; this file is the detail behind both. Every coding tool follows this file, whichever it is: `CLAUDE.md` imports it with `@AGENTS.md` and adds only Claude Code specifics, and `docs/guides/working-with-agents.md` says what each tool reads. The design, and the reasons behind the rules below, are in `docs/plans/0001-geolint.md`.
 
 ## About
 
@@ -42,7 +42,7 @@ npm run check
 - `check` runs lint, typecheck, coverage, build and smoke in sequence.
 - In a git worktree, `npm ci` fails at its `prepare` script (lefthook cannot install there). Use `npm ci --ignore-scripts` and run `npm run lint` yourself before you commit, and keep commit messages free of listed names, because the `commit-msg` hook does not run there.
 
-CI runs these workflows: `CI` (the `build` job runs lint, the names check on the pull request text, the Conventional Commit check on its title, a warning when its description lacks an issue link or a `Checks` section, typecheck, coverage and build; `pack and install` runs the smoke test and `pack:lint`; `Registry signatures` runs `npm audit signatures`; `tests on windows-latest` and `tests on macos-latest` run lint, the tests, the build and the smoke test on those systems), `CodeQL`, `Scorecard`, `Dependency review`, `Workflow security lint` (zizmor), `Secret scan` (TruffleHog) and `CLA`.
+CI runs these workflows: `CI` (the `build` job runs lint, the names check on the pull request text, the Conventional Commit check on its title, a warning when its description lacks an issue link or a `Checks` section, typecheck, coverage and build; `pack and install` runs the smoke test and `pack:lint`; `Registry signatures` runs `npm audit signatures`; `tests on windows-latest` and `tests on macos-latest` run lint, the tests, the build and the smoke test on those systems), `CodeQL`, `Scorecard`, `Dependency review`, `Workflow security lint` (zizmor), `Secret scan` (TruffleHog), `CLA` and `Stale` (weekly: it labels issues and pull requests with no activity and closes nothing).
 
 ## Engineering principles
 
@@ -108,7 +108,7 @@ Changes reach `main` through pull requests: a branch named for the change, a Con
 
 Anything an agent posts on GitHub appears under the account that is logged in, so write it as plain project facts in a neutral voice. No personal opinions or claims in that person's name, no `@mentions` of people (commands to a bot such as Dependabot are fine), no employer or private references, and no attribution lines naming an AI tool. Brief every sub-agent the same way.
 
-No instruction file, agent definition, brief, document, code comment, test or GitHub post names the maintainer personally. Say "the maintainer" or describe the decision. The only intended places a person is named are the legal definition of the Owner in `CLA.md`, the contact address in `SECURITY.md` and the git author of a commit.
+No instruction file, agent definition, brief, document, code comment, test or GitHub post names the maintainer personally. Say "the maintainer" or describe the decision. The only intended places a person is named are the legal definition of the Owner in `CLA.md`, the contact address in `.github/SECURITY.md` and the git author of a commit.
 
 ## Definition of done
 
@@ -129,7 +129,7 @@ No instruction file, agent definition, brief, document, code comment, test or Gi
 **Ask the maintainer first**
 
 - Adding a runtime dependency, or a dataset (the country outlines are the only one).
-- Changing the licence, `NOTICE`, `CLA.md`, `SECURITY.md` or the repository ruleset.
+- Changing the licence, `NOTICE`, `CLA.md`, `.github/SECURITY.md` or the repository ruleset.
 - Publishing to npm, creating a tag or a release, removing `private` from the manifest, or adding a workflow that can publish. In Claude Code, `.claude/settings.json` denies the npm commands that publish or change who may publish; `docs/guides/working-with-agents.md` ("Keeping agents from publishing") says what it covers.
 - Deleting a remote resource, such as a branch other than your own, a release or the `cla-signatures` branch.
 
@@ -143,6 +143,6 @@ No instruction file, agent definition, brief, document, code comment, test or Gi
 
 ## Documentation
 
-`README.md` is the entry point: what geolint is, how to install and use it, the rules, the failure modes, performance and dependencies. `docs/plans/` holds the numbered plans; `docs/plans/0001-geolint.md` is the design. `docs/guides/working-with-agents.md` says how each coding tool reads the project, and `docs/guides/personal-preferences.md` where your own working style goes. `CONTRIBUTING.md`, `GOVERNANCE.md`, `ROADMAP.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `CLA.md` and `ATTRIBUTIONS.md` cover contribution, decisions, plans, reporting, conduct, the contributor terms and credits.
+`README.md` is the entry point: what geolint is, how to install and use it, the rules, the failure modes, performance and dependencies. `docs/plans/` holds the numbered plans; `docs/plans/0001-geolint.md` is the design. `docs/guides/working-with-agents.md` says how each coding tool reads the project, and `docs/guides/personal-preferences.md` where your own working style goes. `.github/CONTRIBUTING.md`, `.github/GOVERNANCE.md`, `ROADMAP.md`, `.github/SECURITY.md`, `.github/CODE_OF_CONDUCT.md`, `CLA.md` and `ATTRIBUTIONS.md` cover contribution, decisions, plans, reporting, conduct, the contributor terms and credits.
 
 This file holds project rules only. How you like to work (how much to delegate, which models to prefer, tone, tools) goes in a git-ignored local file or your tool's user-level file, never here or in `CLAUDE.md`. `docs/guides/personal-preferences.md` says how. A personal preference never overrides a rule in this file.

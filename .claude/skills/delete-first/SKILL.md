@@ -47,7 +47,7 @@ These are fixed points, and a smaller change is not worth losing one:
 
 - The only test of a behaviour, a rule's passing and failing fixtures, and any privacy, security, licence, names or portability check, or any review step. A duplicate test may be reported, with what it duplicates and where the remaining coverage lives.
 - Duplication that `AGENTS.md` or a check requires: the generated agent copies, and documents the definition of done requires.
-- The licence and legal terms and the security policy (`SECURITY.md`).
+- The licence and legal terms and the security policy (`.github/SECURITY.md`).
 - Error handling at a boundary where input is untrusted (the reader, the command line, the files the command opens).
 
 A check that is slow or awkward is a reason to make it faster or clearer, not to drop it. A proposal never overrides `AGENTS.md`. When you are unsure whether something is a fixed point or required, report the question, not a cut.

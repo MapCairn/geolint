@@ -11,7 +11,7 @@ const REPO = path.resolve(
 );
 
 /** The documents that list the project's skills by name. */
-const LISTS = ["CLAUDE.md", "AGENTS.md", "CONTRIBUTING.md"];
+const LISTS = ["CLAUDE.md", "AGENTS.md", ".github/CONTRIBUTING.md"];
 
 const skills = readdirSync(path.join(REPO, ".claude/skills"), {
   withFileTypes: true,
