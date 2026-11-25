@@ -16,6 +16,12 @@ pre-commit:
     portability:
       run: npm run portability:check
 
+pre-push:
+  commands:
+    typecheck:
+      glob: "**/*.{ts,tsx,mjs,cjs,json}"
+      run: npm run typecheck
+
 commit-msg:
   commands:
     names:

@@ -83,10 +83,29 @@ const RELEASE_GATE_COMMANDS = [
 ];
 
 /** Read-only commands the rules block on purpose, because a `*` matches any text; the guide says so. */
-const OVER_BLOCKED = [
-  "git tag --list",
+const OVER_BLOCKED = ["git tag --list"];
+
+/** Ways npm runs itself or takes a global flag before the command. */
+const WRAPPED_NPM_LAUNCHERS = [
+  "npm exec npm",
+  "npm exec -- npm",
+  "npm x npm",
+  "npm --json",
+  "npm --prefix=.",
+  "npm -w x",
+  "npm -C dir",
+  "npm explore pkg -- npm",
+  "npm explore pkg npm",
+  "npx npm",
+  "npx -y npm",
+  "npx --yes npm",
+];
+
+/** Read-only registry queries whose field name is also a command name (`dist-tags`, `author`). */
+const REGISTRY_QUERIES = [
+  "npm view @mapcairn/geolint dist-tags --json",
   "npm view @mapcairn/geolint author",
-  "npm view @mapcairn/geolint dist-tags",
+  "npm view @mapcairn/geolint time --json",
 ];
 
 /** Commands the rules must leave alone, so the checks, the smoke test and CI watching keep working. */
@@ -184,9 +203,23 @@ describe("the committed deny list for agents", () => {
       },
     );
 
-    it.each(ALLOWED_COMMANDS)("leaves %s alone", (command) => {
-      expect(denied(shell, command), command).toBe(false);
+    it.each(
+      FORBIDDEN_NPM_COMMANDS.flatMap((name) =>
+        WRAPPED_NPM_LAUNCHERS.flatMap((launcher) => [
+          `${launcher} ${name}`,
+          `${launcher} ${name} @mapcairn/geolint --tag next`,
+        ]),
+      ),
+    )("denies the command through npm's own wrappers: %s", (command) => {
+      expect(denied(shell, command), command).toBe(true);
     });
+
+    it.each([...ALLOWED_COMMANDS, ...REGISTRY_QUERIES])(
+      "leaves %s alone",
+      (command) => {
+        expect(denied(shell, command), command).toBe(false);
+      },
+    );
   });
 
   it("has no rule for a tool other than Bash and PowerShell", () => {
