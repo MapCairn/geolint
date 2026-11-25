@@ -95,7 +95,7 @@ One pull request, with one commit for each step.
 
 ## Documents to update
 
-`README.md` (licence section in step 1, package table in step 2), `CONTRIBUTING.md`, `GOVERNANCE.md`, `AGENTS.md`, `CLA.md` and `ATTRIBUTIONS.md` (step 1; Natural Earth and each dependency as it arrives), `ARCHITECTURE.md` (the package list, step 2), `ROADMAP.md` (step 5), the package `README.md` (step 5).
+`README.md` (licence section in step 1, package table in step 2), `.github/CONTRIBUTING.md`, `.github/GOVERNANCE.md`, `AGENTS.md`, `CLA.md` and `ATTRIBUTIONS.md` (step 1; Natural Earth and each dependency as it arrives), `ARCHITECTURE.md` (the package list, step 2), `ROADMAP.md` (step 5), the package `README.md` (step 5).
 
 ## Risks
 

@@ -2,7 +2,7 @@
 
 _Last reviewed: 2026-11-17. Reviewed every year, and sooner when a decision below changes._
 
-This is what geolint intends to do, and what it will not do. Everything here is a plan, not a promise and not a delivery date. The project has one volunteer maintainer (see [`GOVERNANCE.md`](GOVERNANCE.md)), so the order can change. The [open issues](https://github.com/MapCairn/geolint/issues) are the detailed plan and hold the current state of each item, and [`docs/plans/`](docs/plans/README.md) holds the written plans for large changes.
+This is what geolint intends to do, and what it will not do. Everything here is a plan, not a promise and not a delivery date. The project has one volunteer maintainer (see [`.github/GOVERNANCE.md`](.github/GOVERNANCE.md)), so the order can change. The [open issues](https://github.com/MapCairn/geolint/issues) are the detailed plan and hold the current state of each item, and [`docs/plans/`](docs/plans/README.md) holds the written plans for large changes.
 
 ## Direction
 

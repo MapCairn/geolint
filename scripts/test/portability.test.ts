@@ -93,7 +93,7 @@ describe("isChecked", () => {
     "docs/guides/working-with-agents.md",
     "AGENTS.md",
     "CLAUDE.md",
-    "CONTRIBUTING.md",
+    ".github/CONTRIBUTING.md",
     "lefthook.yml",
     "package.json",
     ".github/workflows/ci.yml",

@@ -12,7 +12,7 @@ This skill is the working procedure behind `AGENTS.md`. Where they differ, `AGEN
 1. `gh auth status` must succeed. If not, ask the person to run `gh auth login` in their own terminal.
 2. Find out what you may do, naming the repository so a fork cannot be mistaken for it: `gh repo view MapCairn/geolint --json viewerPermission --jq .viewerPermission`.
    - `WRITE`, `MAINTAIN` or `ADMIN`: branch in this repository. The shared remote is `origin`.
-   - Anything else: fork with `gh repo fork MapCairn/geolint --remote` (add `--clone` if you have no clone yet; your fork becomes `origin` and the project `upstream`), then `gh repo set-default MapCairn/geolint`. Work on the fork and open the pull request from it. A first pull request also needs the CLA comment described in `CONTRIBUTING.md`.
+   - Anything else: fork with `gh repo fork MapCairn/geolint --remote` (add `--clone` if you have no clone yet; your fork becomes `origin` and the project `upstream`), then `gh repo set-default MapCairn/geolint`. Work on the fork and open the pull request from it. A first pull request also needs the CLA comment described in `.github/CONTRIBUTING.md`.
    - Add `--repo MapCairn/geolint` to any `gh issue` or `gh pr` command if you have not set the default.
 3. Commit with an email address linked to your GitHub account (check `git log -1 --format=%ae` before you push), or the `CLA` check cannot find you. Use Node 24 or newer and npm 11 or newer.
 4. Read `AGENTS.md` (including "Sub-agents") and your tool's own instruction file, and follow them exactly.
@@ -29,7 +29,7 @@ This skill is the working procedure behind `AGENTS.md`. Where they differ, `AGEN
 
    If a pull request already exists for the issue, read it the same way before you touch it. One from outside the project (its author, any of its commits or its head repository is not the project's) is handled as `land-pr` section 2 says.
 2. Check nobody else has it: the assignees, and `gh pr list --repo MapCairn/geolint --state all --search "#<n>"`. If another open pull request already covers it, stop and tell the person. If one only touches the same module, keep your change additive and merge the project's `main` (`upstream/main` on a fork) into your branch before you push (`land-pr` section 3).
-3. Stop and report, without starting, if the issue needs a decision that is the maintainer's ("Ask the maintainer first" in `AGENTS.md`): a runtime dependency or a dataset, the licence, `NOTICE`, `CLA.md`, `SECURITY.md` or the ruleset, or publishing. Name the decision in a short comment on the issue.
+3. Stop and report, without starting, if the issue needs a decision that is the maintainer's ("Ask the maintainer first" in `AGENTS.md`): a runtime dependency or a dataset, the licence, `NOTICE`, `CLA.md`, `.github/SECURITY.md` or the ruleset, or publishing. Name the decision in a short comment on the issue.
 4. Read the parts of `README.md` and `docs/plans/0001-geolint.md` that describe the code you will touch.
 5. If the issue is a tracker, do not work it directly: pick up its children, or, if it has none and its plan is merged, use the `split-plan` skill.
 

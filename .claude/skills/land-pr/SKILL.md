@@ -5,7 +5,7 @@ description: "Open, review and land a geolint pull request with the gh CLI: writ
 
 # Land a pull request
 
-`AGENTS.md` and `CONTRIBUTING.md` are the authority; this is the procedure. Changes reach `main` only through a pull request. Never push to `main` and never skip a hook (`--no-verify`).
+`AGENTS.md` and `.github/CONTRIBUTING.md` are the authority; this is the procedure. Changes reach `main` only through a pull request. Never push to `main` and never skip a hook (`--no-verify`).
 
 Unless you ran `gh repo set-default MapCairn/geolint` (see `pick-up-issue`), add `--repo MapCairn/geolint` to every `gh pr` and `gh issue` command here, so a fork is never mistaken for the project.
 
