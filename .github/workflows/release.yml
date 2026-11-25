@@ -1,0 +1,163 @@
+name: Release
+
+# Releases @mapcairn/geolint (docs/guides/releasing.md). It starts only when
+# the maintainer pushes a `v<version>` tag. Three jobs and one environment
+# (`npm`); npm's trusted-publisher record names this file and that
+# environment, so neither is renamed without updating the record.
+#
+# `verify` runs the repository's checks on the tagged commit, packs the tarball
+# once, checks what it holds and records its SHA-256 digest. `npm` is the only
+# job with `id-token: write` and the `npm` environment, so a required reviewer
+# approves each publish; it checks the downloaded tarball against the recorded
+# digest and publishes that file, with provenance and no stored token.
+# `github-release` then creates the release from CHANGELOG.md.
+#
+# While `package.json` sets `private`, `verify` fails at the tarball check and
+# neither later job runs, so a tag pushed early publishes nothing.
+#
+# The tag reaches scripts through `env`, never through an expression in a shell
+# line, and `scripts/release/verifyRelease.mjs` checks it against a pattern
+# before anything else uses it.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions: {}
+
+# A tag never overlaps a run of itself, and nothing that has started is
+# cancelled: a half-finished release is worse than a waiting one.
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read # check out the repository
+    outputs:
+      version: ${{ steps.decide.outputs.version }}
+      dist-tag: ${{ steps.decide.outputs.dist-tag }}
+      private: ${{ steps.decide.outputs.private }}
+      tarball: ${{ steps.record.outputs.tarball }}
+      digest: ${{ steps.record.outputs.digest }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The branch check reads the history of main.
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version-file: .node-version
+          # No cache in a release build.
+          package-manager-cache: false
+      - name: Read the tag against package.json
+        id: decide
+        env:
+          TAG: ${{ github.ref_name }}
+        shell: bash
+        run: node scripts/release/verifyRelease.mjs decide >> "$GITHUB_OUTPUT"
+      - name: Check that the tagged commit is on main
+        env:
+          TAGGED_COMMIT: ${{ github.sha }}
+        shell: bash
+        run: |
+          git fetch --no-tags origin main
+          git merge-base --is-ancestor "$TAGGED_COMMIT" origin/main
+      - name: Check that npm can publish with trusted publishing
+        run: node scripts/release/verifyRelease.mjs npm-version
+      - run: npm ci --ignore-scripts
+      - name: Lint, typecheck, test, build, smoke test and lint the package
+        run: npm run check
+      - name: Pack the tarball once
+        shell: bash
+        run: |
+          mkdir release
+          npm pack --ignore-scripts --pack-destination release
+      - name: Check what the tarball holds
+        env:
+          VERSION: ${{ steps.decide.outputs.version }}
+        run: node scripts/release/verifyRelease.mjs tarball release "$VERSION"
+      - name: Record the tarball's digest
+        id: record
+        shell: bash
+        run: node scripts/release/verifyRelease.mjs record release >> "$GITHUB_OUTPUT"
+      - name: Keep the tarball for the later jobs
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-files
+          path: release/
+          if-no-files-found: error
+          retention-days: 14
+
+  npm:
+    name: npm
+    needs: verify
+    if: needs.verify.outputs.private == 'false'
+    environment: npm
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      id-token: write # trusted publishing: npm exchanges this run's OIDC token for a short-lived credential, so no secret is stored
+      contents: read # check out the repository
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-files
+          path: release
+      - name: Check the file is the one that was packed
+        env:
+          DIGEST: ${{ needs.verify.outputs.digest }}
+        run: node scripts/release/verifyRelease.mjs check release
+      - name: Publish the tarball
+        env:
+          TARBALL: ${{ needs.verify.outputs.tarball }}
+          DIST_TAG: ${{ needs.verify.outputs.dist-tag }}
+        shell: bash
+        run: npm publish "$GITHUB_WORKSPACE/release/$TARBALL" --ignore-scripts --provenance --access public --tag "$DIST_TAG"
+
+  github-release:
+    name: github-release
+    needs: [verify, npm]
+    if: needs.verify.outputs.private == 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write # create the release for the tag
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-files
+          path: release
+      - name: Create the release from the CHANGELOG.md section
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ needs.verify.outputs.version }}
+          DIST_TAG: ${{ needs.verify.outputs.dist-tag }}
+        shell: bash
+        run: |
+          node scripts/release/verifyRelease.mjs notes "$VERSION" > notes.md
+          flags=(--verify-tag --title "$TAG" --notes-file notes.md)
+          if [ "$DIST_TAG" = "next" ]; then
+            flags+=(--prerelease)
+          fi
+          gh release create "$TAG" release/*.tgz "${flags[@]}"
