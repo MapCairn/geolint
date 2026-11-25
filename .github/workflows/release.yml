@@ -10,7 +10,7 @@ name: Release
 # job with `id-token: write` and the `npm` environment, so a required reviewer
 # approves each publish; it checks the downloaded tarball against the recorded
 # digest and publishes that file, with provenance and no stored token.
-# `github-release` then creates the release from CHANGELOG.md.
+# `github-release` then creates the release from the notes `verify` wrote.
 #
 # While `package.json` sets `private`, `verify` fails at the tarball check and
 # neither later job runs, so a tag pushed early publishes nothing.
@@ -78,6 +78,11 @@ jobs:
         run: |
           mkdir release
           npm pack --ignore-scripts --pack-destination release
+      - name: Write the release notes from the CHANGELOG.md section
+        env:
+          VERSION: ${{ steps.decide.outputs.version }}
+        shell: bash
+        run: node scripts/release/verifyRelease.mjs notes "$VERSION" > release/notes.md
       - name: Check what the tarball holds
         env:
           VERSION: ${{ steps.decide.outputs.version }}
@@ -136,27 +141,18 @@ jobs:
     permissions:
       contents: write # create the release for the tag
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
-        with:
-          node-version-file: .node-version
-          package-manager-cache: false
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: release-files
           path: release
-      - name: Create the release from the CHANGELOG.md section
+      - name: Create the release from the notes written in verify
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
-          VERSION: ${{ needs.verify.outputs.version }}
           DIST_TAG: ${{ needs.verify.outputs.dist-tag }}
         shell: bash
         run: |
-          node scripts/release/verifyRelease.mjs notes "$VERSION" > notes.md
-          flags=(--verify-tag --title "$TAG" --notes-file notes.md)
+          flags=(--verify-tag --title "$TAG" --notes-file release/notes.md)
           if [ "$DIST_TAG" = "next" ]; then
             flags+=(--prerelease)
           fi

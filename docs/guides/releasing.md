@@ -7,9 +7,9 @@ How `@mapcairn/geolint` is released: what the `release` skill and the release wo
 1. A **Release pull request** changes the version in `package.json` and `package-lock.json` and adds a `## <version>` section to `CHANGELOG.md`. The `release` skill prepares it; its title is `chore(release): v<version>`. The maintainer merges it.
 2. The maintainer pushes the tag `v<version>` on the merge commit. A tag is the only thing that starts `.github/workflows/release.yml`: no merge, pull request or manual run does.
 3. The workflow has three jobs:
-   - `verify` reads the tag against `package.json` (`scripts/release/verifyRelease.mjs decide`), checks that the tagged commit is on `main` and that npm is 11.5.1 or later (trusted publishing needs it), runs `npm run check`, packs the tarball once, checks what it holds (name, version, `private`, files) and records its SHA-256 digest.
+   - `verify` reads the tag against `package.json` (`scripts/release/verifyRelease.mjs decide`), checks that the tagged commit is on `main` and that npm is 11.5.1 or later (trusted publishing needs it), runs `npm run check`, packs the tarball once, writes the release notes from `CHANGELOG.md`, checks what it holds (name, version, `private`, files) and records its SHA-256 digest.
    - `npm` is the only job with the OIDC permission and the `npm` environment. It waits for a required reviewer, checks the tarball it downloaded against the recorded digest and publishes that file with provenance and no stored token. A version with a prerelease part (`1.3.0-rc.1`) goes to the `next` dist-tag, any other to `latest`.
-   - `github-release` creates the GitHub release from the `## <version>` section of `CHANGELOG.md` and attaches the tarball.
+   - `github-release` creates the GitHub release from those notes and attaches the tarball.
 
 The tag, the version in `package.json` and the heading in `CHANGELOG.md` must agree, or `verify` fails before anything is uploaded. While `package.json` sets `private`, `verify` fails at the tarball check, and `npm` and `github-release` do not run, so a tag pushed too early publishes nothing.
 

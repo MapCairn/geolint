@@ -90,6 +90,7 @@ describe(".github/workflows/release.yml", () => {
     expect(verify).toContain("verifyRelease.mjs decide");
     expect(verify).toContain("git merge-base --is-ancestor");
     expect(verify).toContain("npm run check");
+    expect(verify).toContain("verifyRelease.mjs notes");
     expect(verify).toContain("verifyRelease.mjs tarball release");
     expect(verify).toContain("verifyRelease.mjs record release");
     expect(verify.indexOf("verifyRelease.mjs tarball")).toBeLessThan(
@@ -100,7 +101,7 @@ describe(".github/workflows/release.yml", () => {
   it("creates the GitHub release only after npm, with notes from CHANGELOG.md", () => {
     const release = job("github-release");
     expect(release).toContain("needs: [verify, npm]");
-    expect(release).toContain("verifyRelease.mjs notes");
+    expect(release).toContain("--notes-file release/notes.md");
     expect(release).toContain("contents: write");
   });
 });
